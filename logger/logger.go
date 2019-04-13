@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
-	"github.com/otamoe/gin-base/name"
+	"github.com/otamoe/gin-engine/name"
 	mgoModel "github.com/otamoe/mgo-model"
 	"github.com/sirupsen/logrus"
 )
@@ -42,8 +42,8 @@ type (
 )
 
 var (
-	CONTEXT        = "GIN.BASE.LOGGER"
-	CONTEXT_FIELDS = "GIN.BASE.LOGGER.FIELDS"
+	CONTEXT        = "GIN.ENGINE.LOGGER"
+	CONTEXT_FIELDS = "GIN.ENGINE.LOGGER.FIELDS"
 	Model          = &mgoModel.Model{
 		Name:     "loggers",
 		Document: &Logger{},

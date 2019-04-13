@@ -10,7 +10,7 @@ type (
 	DataFunc func(ctx *gin.Context) interface{}
 )
 
-var CONTEXT = "GIN.BASE.BIND"
+var CONTEXT = "GIN.ENGINE.BIND"
 
 func Bind(dataFunc DataFunc) gin.HandlerFunc {
 	return func(ctx *gin.Context) {

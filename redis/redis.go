@@ -10,7 +10,7 @@ type (
 	GetSession func() *redis.Client
 )
 
-var CONTEXT = "GIN.BASE.REDIS"
+var CONTEXT = "GIN.ENGINE.REDIS"
 
 func Middleware(getSession GetSession) gin.HandlerFunc {
 	return func(ctx *gin.Context) {

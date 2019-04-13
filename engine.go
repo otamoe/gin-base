@@ -1,4 +1,4 @@
-package base
+package engine
 
 import (
 	"compress/gzip"
@@ -25,13 +25,13 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/globalsign/mgo"
 	"github.com/go-redis/redis"
-	"github.com/otamoe/gin-base/compress"
-	"github.com/otamoe/gin-base/errors"
-	"github.com/otamoe/gin-base/logger"
-	"github.com/otamoe/gin-base/mongo"
-	"github.com/otamoe/gin-base/notfound"
-	ginRedis "github.com/otamoe/gin-base/redis"
-	"github.com/otamoe/gin-base/size"
+	"github.com/otamoe/gin-engine/compress"
+	"github.com/otamoe/gin-engine/errors"
+	"github.com/otamoe/gin-engine/logger"
+	"github.com/otamoe/gin-engine/mongo"
+	"github.com/otamoe/gin-engine/notfound"
+	ginRedis "github.com/otamoe/gin-engine/redis"
+	"github.com/otamoe/gin-engine/size"
 	"github.com/sirupsen/logrus"
 )
 

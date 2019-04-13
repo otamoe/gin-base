@@ -4,8 +4,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var CONTEXT_TYPE = "GIN.BASE.NAME.TYPE"
-var CONTEXT_ACTION = "GIN.BASE.NAME.ACTION"
+var CONTEXT_TYPE = "GIN.ENGINE.NAME.TYPE"
+var CONTEXT_ACTION = "GIN.ENGINE.NAME.ACTION"
 
 func Middleware(typ, action string) gin.HandlerFunc {
 	return func(ctx *gin.Context) {

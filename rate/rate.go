@@ -12,8 +12,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis"
-	"github.com/otamoe/gin-base/errors"
-	redisMiddleware "github.com/otamoe/gin-base/redis"
+	"github.com/otamoe/gin-engine/errors"
+	redisMiddleware "github.com/otamoe/gin-engine/redis"
 )
 
 type (
@@ -27,7 +27,7 @@ type (
 	}
 )
 
-var CONTEXT = "GIN.BASE.RATE"
+var CONTEXT = "GIN.ENGINE.RATE"
 
 var PREFIX = "rate"
 
