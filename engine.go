@@ -247,37 +247,36 @@ func (engine *Engine) initServer() {
 			config.Addr = ":8443"
 		}
 	}
+
 	if strings.HasSuffix(config.Addr, ":443") || strings.HasSuffix(config.Addr, ":8443") || (config.Certificates != nil && len(config.Certificates) == 0) {
 		if len(config.Certificates) == 0 {
-			for host := range engine.Handler {
-				priv, cert, err := NewCertificate(host, []string{host}, "ecdsa", 384)
-				if err != nil {
-					panic(err)
-				}
-
-				privBytes, err2 := x509.MarshalECPrivateKey(priv.(*ecdsa.PrivateKey))
-				if err2 != nil {
-					panic(err)
-				}
-
-				privBlock := &pem.Block{
-					Type:  "EC PRIVATE KEY",
-					Bytes: privBytes,
-				}
-				privPem := pem.EncodeToMemory(privBlock)
-
-				certBlock := &pem.Block{
-					Type:  "CERTIFICATE",
-					Bytes: cert,
-				}
-
-				certPem := pem.EncodeToMemory(certBlock)
-
-				config.Certificates = append(config.Certificates, Certificate{
-					Certificate: string(certPem),
-					PrivateKey:  string(privPem),
-				})
+			priv, cert, err := NewCertificate("localhost", []string{"localhost"}, "ecdsa", 384)
+			if err != nil {
+				panic(err)
 			}
+
+			privBytes, err2 := x509.MarshalECPrivateKey(priv.(*ecdsa.PrivateKey))
+			if err2 != nil {
+				panic(err)
+			}
+
+			privBlock := &pem.Block{
+				Type:  "EC PRIVATE KEY",
+				Bytes: privBytes,
+			}
+			privPem := pem.EncodeToMemory(privBlock)
+
+			certBlock := &pem.Block{
+				Type:  "CERTIFICATE",
+				Bytes: cert,
+			}
+
+			certPem := pem.EncodeToMemory(certBlock)
+
+			config.Certificates = append(config.Certificates, Certificate{
+				Certificate: string(certPem),
+				PrivateKey:  string(privPem),
+			})
 		}
 	}
 
