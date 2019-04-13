@@ -11,6 +11,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/pem"
 	"fmt"
 	"log"
 	"math/big"
@@ -37,38 +38,61 @@ import (
 )
 
 type (
-	MongoConfig struct {
-		URL         string
-		DialTimeout time.Duration
+	CompressConfig struct {
+		Types []string `json:"types,omitempty"`
 	}
 
 	LoggerConfig struct {
-		File string
+		File string `json:"file,omitempty"`
+	}
+
+	RedisConfig struct {
+		URLs []string `json:"urls,omitempty"`
+
+		PoolLimit   int           `json:"pool_limit,omitempty"`
+		PoolTimeout time.Duration `json:"pool_timeout,omitempty"`
+
+		DialTimeout   time.Duration `json:"dial_timeout,omitempty"`
+		SocketTimeout time.Duration `json:"socket_timeout,omitempty"`
+	}
+
+	MongoConfig struct {
+		URLs []string `json:"urls,omitempty"`
+
+		PoolLimit   int           `json:"pool_limit,omitempty"`
+		PoolTimeout time.Duration `json:"pool_timeout,omitempty"`
+
+		DialTimeout   time.Duration `json:"dial_timeout,omitempty"`
+		SocketTimeout time.Duration `json:"socket_timeout,omitempty"`
 	}
 
 	ServerConfig struct {
-		Addr              string
-		Certificates      []tls.Certificate
-		ReadTimeout       time.Duration
-		ReadHeaderTimeout time.Duration
-		WriteTimeout      time.Duration
-		IdleTimeout       time.Duration
-		MaxHeaderBytes    int
+		Addr              string        `json:"addr,omitempty"`
+		Certificates      []Certificate `json:"certificates,omitempty"`
+		ReadTimeout       time.Duration `json:"read_timeout,omitempty"`
+		ReadHeaderTimeout time.Duration `json:"read_header_timeout,omitempty"`
+		WriteTimeout      time.Duration `json:"write_timeout,omitempty"`
+		IdleTimeout       time.Duration `json:"idle_timeout,omitempty"`
+	}
+
+	Certificate struct {
+		Certificate string `json:"certificate"`
+		PrivateKey  string `json:"private_key"`
 	}
 
 	Handler map[string]http.Handler
 
 	Engine struct {
-		ENV  string
-		Name string
+		ENV  string `json:"env,omitempty"`
+		Name string `json:"name,omitempty"`
 
-		LoggerConfig   LoggerConfig
-		MongoConfig    MongoConfig
-		RedisConfig    redis.Options
-		CompressConfig compress.Config
-		ServerConfig   ServerConfig
+		CompressConfig CompressConfig `json:"compress,omitempty"`
+		LoggerConfig   LoggerConfig   `json:"logger,omitempty"`
+		RedisConfig    RedisConfig    `json:"redis,omitempty"`
+		MongoConfig    MongoConfig    `json:"mongo,omitempty"`
+		ServerConfig   ServerConfig   `json:"server,omitempty"`
 
-		Handler Handler
+		Handler Handler `json:"-"`
 
 		mongoSession *mgo.Session
 	}
@@ -113,18 +137,6 @@ func (engine *Engine) initGin() {
 
 func (engine *Engine) initCompress() {
 	config := engine.CompressConfig
-	if config.GzipLevel == 0 {
-		config.GzipLevel = gzip.DefaultCompression
-	}
-	if config.MinLength == 0 {
-		config.MinLength = 256
-	}
-	if config.BrLGWin == 0 {
-		config.BrLGWin = 19
-	}
-	if config.BrQuality == 0 {
-		config.BrQuality = 6
-	}
 	if config.Types == nil {
 		config.Types = []string{"application/json", "text/plain"}
 	}
@@ -163,27 +175,22 @@ func (engine *Engine) initLogger() {
 
 func (engine *Engine) initRedis() {
 	config := engine.RedisConfig
-	if config.Addr == "" {
-		config.Addr = "localhost:6379"
+	if len(config.URLs) == 0 {
+		config.URLs = append(config.URLs, "localhost:6379")
 	}
-	if config.PoolSize == 0 {
-		config.PoolSize = 4096
+	if config.PoolLimit == 0 {
+		config.PoolLimit = 2048
 	}
-	if config.MaxRetries == 0 {
-		config.MaxRetries = 3
+	if config.PoolTimeout == 0 {
+		config.PoolTimeout = time.Second * 3
 	}
 	if config.DialTimeout == 0 {
 		config.DialTimeout = time.Second * 2
 	}
-	if config.ReadTimeout == 0 {
-		config.ReadTimeout = time.Second * 2
+	if config.SocketTimeout == 0 {
+		config.SocketTimeout = time.Second * 2
 	}
-	if config.WriteTimeout == 0 {
-		config.WriteTimeout = time.Second * 2
-	}
-	if config.PoolTimeout == 0 {
-		config.PoolTimeout = time.Second * 2
-	}
+
 	engine.RedisConfig = config
 
 	logWriter := engine.Logger().Writer()
@@ -192,13 +199,24 @@ func (engine *Engine) initRedis() {
 
 func (engine *Engine) initMongo() {
 	config := engine.MongoConfig
-	if config.URL == "" {
-		config.URL = "localhost:27017/" + engine.Name
+	if len(config.URLs) == 0 {
+		config.URLs = append(config.URLs, "localhost:27017/"+engine.Name)
+	}
+	if config.PoolLimit == 0 {
+		config.PoolLimit = 2048
+	}
+	if config.PoolTimeout == 0 {
+		config.PoolTimeout = time.Second * 3
 	}
 	if config.DialTimeout == 0 {
 		config.DialTimeout = time.Second * 2
 	}
+	if config.SocketTimeout == 0 {
+		config.SocketTimeout = time.Minute * 1
+	}
+
 	engine.MongoConfig = config
+
 	mgoModel.CONTEXT = mongo.CONTEXT
 
 	if engine.ENV == "development" {
@@ -209,11 +227,13 @@ func (engine *Engine) initMongo() {
 	mgo.SetLogger(log.New(logWriter, "", 0))
 
 	var err error
-	engine.mongoSession, err = mgo.DialWithTimeout(config.URL, config.DialTimeout)
+	engine.mongoSession, err = mgo.DialWithTimeout(strings.Join(config.URLs, ","), config.DialTimeout)
 	if err != nil {
 		panic(err)
 	}
-	engine.mongoSession.SetPoolLimit(4096)
+	engine.mongoSession.SetPoolLimit(config.PoolLimit)
+	engine.mongoSession.SetPoolTimeout(config.PoolTimeout)
+	engine.mongoSession.SetSocketTimeout(config.SocketTimeout)
 }
 
 func (engine *Engine) initServer() {
@@ -232,9 +252,28 @@ func (engine *Engine) initServer() {
 				if err != nil {
 					panic(err)
 				}
-				config.Certificates = append(config.Certificates, tls.Certificate{
-					Certificate: [][]byte{cert},
-					PrivateKey:  priv,
+
+				privBytes, err2 := x509.MarshalECPrivateKey(priv.(*ecdsa.PrivateKey))
+				if err2 != nil {
+					panic(err)
+				}
+
+				privBlock := &pem.Block{
+					Type:  "EC PRIVATE KEY",
+					Bytes: privBytes,
+				}
+				privPem := pem.EncodeToMemory(privBlock)
+
+				certBlock := &pem.Block{
+					Type:  "CERTIFICATE",
+					Bytes: cert,
+				}
+
+				certPem := pem.EncodeToMemory(certBlock)
+
+				config.Certificates = append(config.Certificates, ServerConfigCertificate{
+					Certificate: string(certPem),
+					PrivateKey:  string(privPem),
 				})
 			}
 		}
@@ -252,9 +291,6 @@ func (engine *Engine) initServer() {
 	if config.IdleTimeout == 0 {
 		config.IdleTimeout = time.Second * 300
 	}
-	if config.MaxHeaderBytes == 0 {
-		config.MaxHeaderBytes = 4096
-	}
 
 	engine.ServerConfig = config
 }
@@ -264,7 +300,14 @@ func (engine *Engine) Logger() *logrus.Logger {
 }
 
 func (engine *Engine) Redis() (client *redis.Client) {
-	client = redis.NewClient(&engine.RedisConfig)
+	client = redis.NewClient(&redis.Options{
+		Addr:         strings.Join(engine.RedisConfig.URLs, ","),
+		DialTimeout:  engine.RedisConfig.DialTimeout,
+		ReadTimeout:  engine.RedisConfig.SocketTimeout,
+		WriteTimeout: engine.RedisConfig.SocketTimeout,
+		PoolSize:     engine.RedisConfig.PoolLimit,
+		PoolTimeout:  engine.RedisConfig.PoolTimeout,
+	})
 	return
 }
 
@@ -277,13 +320,13 @@ func (engine *Engine) New() (r *gin.Engine) {
 	r = gin.New()
 
 	// Compress 中间件
-	r.Use(compress.Middleware(engine.CompressConfig))
-
-	// Redis 中间件
-	r.Use(ginRedis.Middleware(engine.Redis))
-
-	// Mongo 中间件
-	r.Use(mongo.Middleware(engine.Mongo))
+	r.Use(compress.Middleware(compress.Config{
+		GzipLevel: gzip.DefaultCompression,
+		MinLength: 256,
+		BrLGWin:   19,
+		BrQuality: 6,
+		Types:     engine.CompressConfig.Types,
+	}))
 
 	// logger
 	r.Use(logger.Middleware(logger.Config{
@@ -292,6 +335,12 @@ func (engine *Engine) New() (r *gin.Engine) {
 
 	// errors
 	r.Use(errors.Middleware())
+
+	// Redis 中间件
+	r.Use(ginRedis.Middleware(engine.Redis))
+
+	// Mongo 中间件
+	r.Use(mongo.Middleware(engine.Mongo))
 
 	// body size
 	r.Use(size.Middleware(1024 * 512))
@@ -304,12 +353,22 @@ func (engine *Engine) New() (r *gin.Engine) {
 
 func (engine *Engine) Server() {
 	engine.initServer()
+
 	config := engine.ServerConfig
+
 	var tlsConfig *tls.Config
-	if config.Certificates != nil {
+	if len(config.Certificates) != 0 {
+		var certificates []tls.Certificate
+		for _, val := range config.Certificates {
+			certificate, err := tls.X509KeyPair([]byte(val.Certificate), []byte(val.PrivateKey))
+			if err != nil {
+				panic(err)
+			}
+			certificates = append(certificates, certificate)
+		}
 		tlsConfig = &tls.Config{
 			MinVersion:               tls.VersionTLS10,
-			Certificates:             config.Certificates,
+			Certificates:             certificates,
 			PreferServerCipherSuites: true,
 			CipherSuites: []uint16{
 				tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
@@ -334,7 +393,7 @@ func (engine *Engine) Server() {
 		ReadHeaderTimeout: config.ReadHeaderTimeout,
 		WriteTimeout:      config.WriteTimeout,
 		IdleTimeout:       config.IdleTimeout,
-		MaxHeaderBytes:    config.MaxHeaderBytes,
+		MaxHeaderBytes:    4096,
 		ErrorLog:          log.New(logWriter, "", 0),
 	}
 
