@@ -123,6 +123,7 @@ func (engine *Engine) Init() *Engine {
 	engine.initLogger()
 	engine.initRedis()
 	engine.initMongo()
+	engine.initServer()
 
 	return engine
 }
@@ -353,8 +354,6 @@ func (engine *Engine) New() (r *gin.Engine) {
 }
 
 func (engine *Engine) Server() {
-	engine.initServer()
-
 	config := engine.ServerConfig
 
 	var tlsConfig *tls.Config
