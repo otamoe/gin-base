@@ -271,7 +271,7 @@ func (engine *Engine) initServer() {
 
 				certPem := pem.EncodeToMemory(certBlock)
 
-				config.Certificates = append(config.Certificates, ServerConfigCertificate{
+				config.Certificates = append(config.Certificates, Certificate{
 					Certificate: string(certPem),
 					PrivateKey:  string(privPem),
 				})
