@@ -100,7 +100,7 @@ type (
 
 func (engine *Engine) Init() *Engine {
 	switch engine.ENV {
-	case "dev":
+	case "dev", "development":
 		engine.ENV = "development"
 	case "test":
 		engine.ENV = "test"
