@@ -32,6 +32,7 @@ import (
 	"github.com/otamoe/gin-engine/notfound"
 	ginRedis "github.com/otamoe/gin-engine/redis"
 	"github.com/otamoe/gin-engine/size"
+	mgoModel "github.com/otamoe/mgo-model"
 	"github.com/sirupsen/logrus"
 )
 
@@ -198,6 +199,7 @@ func (engine *Engine) initMongo() {
 		config.DialTimeout = time.Second * 2
 	}
 	engine.MongoConfig = config
+	mgoModel.CONTEXT = mongo.CONTEXT
 
 	if engine.ENV == "development" {
 		mgo.SetDebug(true)
