@@ -102,7 +102,9 @@ func (engine *Engine) Init() *Engine {
 	switch engine.ENV {
 	case "dev":
 		engine.ENV = "development"
-	case "prod", "":
+	case "test":
+		engine.ENV = "test"
+	default:
 		engine.ENV = "production"
 	}
 	if engine.Name == "" {
@@ -221,10 +223,9 @@ func (engine *Engine) initMongo() {
 
 	if engine.ENV == "development" {
 		mgo.SetDebug(true)
+		logWriter := engine.Logger().Writer()
+		mgo.SetLogger(log.New(logWriter, "", 0))
 	}
-
-	logWriter := engine.Logger().Writer()
-	mgo.SetLogger(log.New(logWriter, "", 0))
 
 	var err error
 	engine.mongoSession, err = mgo.DialWithTimeout(strings.Join(config.URLs, ","), config.DialTimeout)
