@@ -153,10 +153,19 @@ func Middleware(c Config) gin.HandlerFunc {
 
 			logger.Fields["_ip"] = logger.IP
 			logger.Fields["_latency"] = logger.Latency
-			logger.Fields["_token"] = logger.TokenID.Hex()
-			logger.Fields["_user"] = logger.UserID.Hex()
-			logger.Fields["_bind"] = logger.Bind
-			logger.Fields["_params"] = logger.Params
+
+			if logger.TokenID != "" {
+				logger.Fields["_token"] = logger.TokenID.Hex()
+			}
+			if logger.UserID != "" {
+				logger.Fields["_user"] = logger.UserID.Hex()
+			}
+			if logger.Bind != nil {
+				logger.Fields["_bind"] = logger.Bind
+			}
+			if len(logger.Params) != 0 {
+				logger.Fields["_params"] = logger.Params
+			}
 
 			rawPath := logger.Path
 			if val := logger.Query.Encode(); val != "" {
@@ -166,11 +175,11 @@ func Middleware(c Config) gin.HandlerFunc {
 			with := c.Logger.WithFields(logger.Fields)
 
 			if logger.StatusCode >= 500 {
-				with.Errorf("%s%s %s %s/%s/%s %d %s\n%s\n", c.Prefix, logger.ID.Hex(), logger.Handler, logger.Type, logger.Action, logger.Method, logger.StatusCode, rawPath, logger.ErrorsText)
+				with.Errorf("%s%s %s/%s/%s %s %d %s\n%s\n", c.Prefix, logger.ID.Hex(), logger.Handler, logger.Type, logger.Action, logger.Method, logger.StatusCode, rawPath, logger.ErrorsText)
 			} else if logger.ErrorsText != "" {
-				with.Warnf("%s%s %s %s/%s/%s %d %s\n%s\n", c.Prefix, logger.ID.Hex(), logger.Handler, logger.Type, logger.Action, logger.Method, logger.StatusCode, rawPath, logger.ErrorsText)
+				with.Warnf("%s%s %s/%s/%s %s %d %s\n%s\n", c.Prefix, logger.ID.Hex(), logger.Handler, logger.Type, logger.Action, logger.Method, logger.StatusCode, rawPath, logger.ErrorsText)
 			} else {
-				with.Infof("%s%s %s %s/%s/%s %d %s", c.Prefix, logger.ID.Hex(), logger.Handler, logger.Type, logger.Action, logger.Method, logger.StatusCode, rawPath)
+				with.Infof("%s%s %s/%s/%s %s %d %s", c.Prefix, logger.ID.Hex(), logger.Handler, logger.Type, logger.Action, logger.Method, logger.StatusCode, rawPath)
 			}
 		}()
 		ctx.Next()
