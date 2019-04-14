@@ -57,12 +57,16 @@ func (b *Errors) JSON() map[string]interface{} {
 	return json
 }
 
-func (b *Errors) String() string {
+func (b *Errors) Error() string {
 	var errorsText []string
 	for _, e := range b.Errors {
 		errorsText = append(errorsText, e.Error())
 	}
 	return strings.Join(errorsText, "\n")
+}
+
+func (b *Errors) String() string {
+	return b.Error()
 }
 
 func (b *Errors) MarshalJSON() ([]byte, error) {
