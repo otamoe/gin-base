@@ -24,6 +24,10 @@ type (
 	}
 )
 
+func init() {
+	mgoModel.CONTEXT = mongo.CONTEXT
+}
+
 func (config *Mongo) init(server *Server, handler *Handler) {
 	if config.session != nil {
 		return
@@ -49,8 +53,6 @@ func (config *Mongo) init(server *Server, handler *Handler) {
 	if config.SocketTimeout == 0 {
 		config.SocketTimeout = time.Minute * 1
 	}
-
-	mgoModel.CONTEXT = mongo.CONTEXT
 
 	if handler == nil && server != nil {
 		if server.ENV == "development" {
