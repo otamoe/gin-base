@@ -21,7 +21,7 @@ type (
 	}
 )
 
-var CONTEXT = "GIN.ENGINE.CACHE"
+var CONTEXT = "GIN.SERVER.CACHE"
 
 func Middleware(c Config) gin.HandlerFunc {
 	return func(ctx *gin.Context) {

@@ -4,9 +4,9 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var CONTEXT_HANDLER = "GIN.ENGINE.RESOURCE.HANDLER"
-var CONTEXT_TYPE = "GIN.ENGINE.RESOURCE.TYPE"
-var CONTEXT_ACTION = "GIN.ENGINE.RESOURCE.ACTION"
+var CONTEXT_HANDLER = "GIN.SERVER.RESOURCE.HANDLER"
+var CONTEXT_TYPE = "GIN.SERVER.RESOURCE.TYPE"
+var CONTEXT_ACTION = "GIN.SERVER.RESOURCE.ACTION"
 
 func Handler(handler string) gin.HandlerFunc {
 	return func(ctx *gin.Context) {

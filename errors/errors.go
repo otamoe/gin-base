@@ -35,7 +35,10 @@ type (
 		Params     map[string]interface{} `json:"params,omitempty"`
 		Maps       map[string]interface{} `json:"-"`
 	}
+	Callback func(errors *Errors)
 )
+
+var CONTEXT_CALLBACK = "GIN.SERVER.ERRORS.CALLBACK"
 
 func (b *Errors) JSON() map[string]interface{} {
 	json := map[string]interface{}{
@@ -65,6 +68,7 @@ func (b *Errors) String() string {
 func (b *Errors) MarshalJSON() ([]byte, error) {
 	return json.Marshal(b.JSON())
 }
+
 func (b *Errors) addStatusCode(statusCode int) {
 	if statusCode > b.StatusCode || (b.StatusCode == http.StatusNotFound && statusCode >= http.StatusBadRequest) {
 		b.StatusCode = statusCode
@@ -243,7 +247,7 @@ func Middleware() gin.HandlerFunc {
 				return
 			}
 
-			errors := Errors{}
+			errors := &Errors{}
 			errors.StatusCode = ctx.Writer.Status()
 
 			for _, val := range ctx.Errors {
@@ -360,6 +364,14 @@ func Middleware() gin.HandlerFunc {
 			if errors.StatusCode < http.StatusMultipleChoices {
 				errors.StatusCode = http.StatusInternalServerError
 			}
+
+			// callback
+			if val, ok := ctx.Get(CONTEXT_CALLBACK); ok && val != nil {
+				if call, ok := val.(Callback); ok {
+					call(errors)
+				}
+			}
+
 			ctx.AbortWithStatusJSON(errors.StatusCode, errors)
 		}()
 		ctx.Next()

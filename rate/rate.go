@@ -27,7 +27,7 @@ type (
 	}
 )
 
-var CONTEXT = "GIN.ENGINE.RATE"
+var CONTEXT = "GIN.SERVER.RATE"
 
 var PREFIX = "rate"
 

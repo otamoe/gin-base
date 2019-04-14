@@ -9,7 +9,7 @@ type (
 	GetSession func() *mgo.Session
 )
 
-var CONTEXT = "GIN.ENGINE.MONGO"
+var CONTEXT = "GIN.SERVER.MONGO"
 
 func Middleware(getSession GetSession) gin.HandlerFunc {
 	return func(ctx *gin.Context) {

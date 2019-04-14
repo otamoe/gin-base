@@ -41,12 +41,14 @@ type (
 		Fields                map[string]interface{} `json:"fields,omitempty" bson:"fields,omitempty"`
 		CreatedAt             *time.Time             `json:"created_at" bson:"created_at"`
 	}
+	Callback func(logger *Logger)
 )
 
 var (
-	CONTEXT        = "GIN.ENGINE.LOGGER"
-	CONTEXT_FIELDS = "GIN.ENGINE.LOGGER.FIELDS"
-	Model          = &mgoModel.Model{
+	CONTEXT          = "GIN.SERVER.LOGGER"
+	CONTEXT_FIELDS   = "GIN.SERVER.LOGGER.FIELDS"
+	CONTEXT_CALLBACK = "GIN.SERVER.LOGGER.CALBACK"
+	Model            = &mgoModel.Model{
 		Name:     "loggers",
 		Document: &Logger{},
 		Indexs: []mgo.Index{
@@ -173,6 +175,13 @@ func Middleware(c Config) gin.HandlerFunc {
 			}
 
 			with := c.Logger.WithFields(logger.Fields)
+
+			// callback
+			if val, ok := ctx.Get(CONTEXT_CALLBACK); ok && val != nil {
+				if call, ok := val.(Callback); ok {
+					call(logger)
+				}
+			}
 
 			if logger.StatusCode >= 500 {
 				with.Errorf("%s%s %s/%s/%s %s %d %s\n%s\n", c.Prefix, logger.ID.Hex(), logger.Handler, logger.Type, logger.Action, logger.Method, logger.StatusCode, rawPath, logger.ErrorsText)
