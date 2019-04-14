@@ -1,4 +1,4 @@
-package errors
+package errs
 
 import (
 	"bytes"
@@ -256,16 +256,16 @@ func Middleware() gin.HandlerFunc {
 				return
 			}
 
-			errors := &Errors{}
-			errors.StatusCode = ctx.Writer.Status()
+			errs := &Errors{}
+			errs.StatusCode = ctx.Writer.Status()
 
 			for _, val := range ctx.Errors {
 				switch val.Err.(type) {
 				case *Error:
 					e := val.Err.(*Error)
-					errors.Errors = append(errors.Errors, e)
-					errors.addStatusCode(e.StatusCode)
-					errors.setMeta(val.Meta)
+					errs.Errors = append(errs.Errors, e)
+					errs.addStatusCode(e.StatusCode)
+					errs.setMeta(val.Meta)
 				case validator9.ValidationErrors:
 					validationErrors := val.Err.(validator9.ValidationErrors)
 					for _, fieldError := range validationErrors {
@@ -350,7 +350,7 @@ func Middleware() gin.HandlerFunc {
 						if index := strings.Index(path, "."); index != -1 {
 							path = path[index+1:]
 						}
-						errors.Errors = append(errors.Errors, &Error{
+						errs.Errors = append(errs.Errors, &Error{
 							Message:    fieldError.Translate(nil),
 							Name:       "validation",
 							Type:       tag,
@@ -360,28 +360,28 @@ func Middleware() gin.HandlerFunc {
 							Params:     params,
 						})
 					}
-					errors.addStatusCode(http.StatusBadRequest)
-					errors.setMeta(val.Meta)
+					errs.addStatusCode(http.StatusBadRequest)
+					errs.setMeta(val.Meta)
 				default:
-					errors.Errors = append(errors.Errors, &Error{
+					errs.Errors = append(errs.Errors, &Error{
 						Err: val.Err,
 					})
-					errors.setMeta(val.Meta)
+					errs.setMeta(val.Meta)
 				}
 			}
 
-			if errors.StatusCode < http.StatusMultipleChoices {
-				errors.StatusCode = http.StatusInternalServerError
+			if errs.StatusCode < http.StatusMultipleChoices {
+				errs.StatusCode = http.StatusInternalServerError
 			}
 
 			// callback
 			if val, ok := ctx.Get(CONTEXT_CALLBACK); ok && val != nil {
 				if call, ok := val.(func(*Errors)); ok {
-					call(errors)
+					call(errs)
 				}
 			}
 
-			ctx.AbortWithStatusJSON(errors.StatusCode, errors)
+			ctx.AbortWithStatusJSON(errs.StatusCode, errs)
 		}()
 		ctx.Next()
 	}

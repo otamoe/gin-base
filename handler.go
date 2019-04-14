@@ -8,7 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/otamoe/gin-server/compress"
-	"github.com/otamoe/gin-server/errors"
+	"github.com/otamoe/gin-server/errs"
 	"github.com/otamoe/gin-server/logger"
 	"github.com/otamoe/gin-server/mongo"
 	"github.com/otamoe/gin-server/notfound"
@@ -77,8 +77,8 @@ func (handler *Handler) Init(server *Server) {
 		Logger: handler.Logger.Get(),
 	}))
 
-	// errors
-	handler.gin.Use(errors.Middleware())
+	// errs
+	handler.gin.Use(errs.Middleware())
 
 	// Redis 中间件
 	handler.gin.Use(ginRedis.Middleware(handler.Redis.Get))

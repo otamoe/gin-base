@@ -12,7 +12,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis"
-	"github.com/otamoe/gin-server/errors"
+	"github.com/otamoe/gin-server/errs"
 	redisMiddleware "github.com/otamoe/gin-server/redis"
 )
 
@@ -143,7 +143,7 @@ func Middleware(rates ...Config) gin.HandlerFunc {
 			ctx.Header("X-RateLimit-Remaining", strconv.FormatInt(remaining, 10))
 			ctx.Header("X-RateLimit-Reset", strconv.FormatInt(reset.Unix(), 10))
 			if remaining == 0 && gin.Mode() != gin.DebugMode {
-				err = &errors.Error{
+				err = &errs.Error{
 					Message:    http.StatusText(http.StatusTooManyRequests),
 					Type:       "rate",
 					StatusCode: http.StatusTooManyRequests,
