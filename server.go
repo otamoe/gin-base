@@ -135,6 +135,7 @@ func (server *Server) Get(name string, create bool) (handler *Handler) {
 		handler = &Handler{
 			Name: name,
 		}
+		server.Handlers = append(server.Handlers, handler)
 	}
 	if handler != nil {
 		handler.Init(server)
