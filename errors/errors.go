@@ -159,6 +159,12 @@ func (e *Error) Clone() *Error {
 	return newE
 }
 
+func New(message string) *Error {
+	return &Error{
+		Message: message,
+	}
+}
+
 func toNameUnderline(name string) string {
 	// 驼峰转 下划线
 	path := []byte{}
