@@ -63,8 +63,7 @@ func (config *Mongo) init(server *Server, handler *Handler) {
 	}
 
 	var err error
-	config.session, err = mgo.DialWithTimeout(strings.Join(config.URLs, ","), config.DialTimeout)
-	if err != nil {
+	if config.session, err = mgo.DialWithTimeout(strings.Join(config.URLs, ","), config.DialTimeout); err != nil {
 		panic(err)
 	}
 	config.session.SetPoolLimit(config.PoolLimit)
