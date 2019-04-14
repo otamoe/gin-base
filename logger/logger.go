@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
-	"github.com/otamoe/gin-server/name"
+	"github.com/otamoe/gin-server/resource"
 	mgoModel "github.com/otamoe/mgo-model"
 	"github.com/sirupsen/logrus"
 )
@@ -24,6 +24,7 @@ type (
 		ID                    bson.ObjectId          `json:"_id" bson:"_id"`
 		UserID                bson.ObjectId          `json:"user_id,omitempty" bson:"user,omitempty"`
 		TokenID               bson.ObjectId          `json:"token_id,omitempty" bson:"token,omitempty"`
+		Handler               string                 `json:"handler,omitempty" bson:"handler,omitempty"`
 		Type                  string                 `json:"type,omitempty" bson:"type,omitempty"`
 		Action                string                 `json:"action,omitempty" bson:"action,omitempty"`
 		IP                    string                 `json:"ip,omitempty" bson:"ip,omitempty"`
@@ -101,20 +102,16 @@ func Middleware(c Config) gin.HandlerFunc {
 				logger.Latency = time.Now().Sub(*now)
 			}
 
+			if logger.Handler == "" {
+				logger.Handler = ctx.GetString(resource.CONTEXT_HANDLER)
+			}
+
 			if logger.Type == "" {
-				if val, ok := ctx.Get(name.CONTEXT_TYPE); ok {
-					if typ, ok := val.(string); ok {
-						logger.Type = typ
-					}
-				}
+				logger.Type = ctx.GetString(resource.CONTEXT_TYPE)
 			}
 
 			if logger.Action == "" {
-				if val, ok := ctx.Get(name.CONTEXT_ACTION); ok {
-					if action, ok := val.(string); ok {
-						logger.Action = action
-					}
-				}
+				logger.Action = ctx.GetString(resource.CONTEXT_ACTION)
 			}
 
 			if logger.Params == nil && len(ctx.Params) != 0 {
@@ -156,8 +153,8 @@ func Middleware(c Config) gin.HandlerFunc {
 
 			logger.Fields["_ip"] = logger.IP
 			logger.Fields["_latency"] = logger.Latency
-			logger.Fields["_token"] = logger.TokenID
-			logger.Fields["_user"] = logger.UserID
+			logger.Fields["_token"] = logger.TokenID.Hex()
+			logger.Fields["_user"] = logger.UserID.Hex()
 			logger.Fields["_bind"] = logger.Bind
 			logger.Fields["_params"] = logger.Params
 
@@ -169,11 +166,11 @@ func Middleware(c Config) gin.HandlerFunc {
 			with := c.Logger.WithFields(logger.Fields)
 
 			if logger.StatusCode >= 500 {
-				with.Errorf("%s%s %s %d %s\n%s\n", c.Prefix, logger.ID, logger.Method, logger.StatusCode, rawPath, logger.ErrorsText)
+				with.Errorf("%s%s %s %d %s\n%s\n", c.Prefix, logger.ID.Hex(), logger.Method, logger.StatusCode, rawPath, logger.ErrorsText)
 			} else if logger.ErrorsText != "" {
-				with.Warnf("%s%s %s %d %s\n%s\n", c.Prefix, logger.ID, logger.Method, logger.StatusCode, rawPath, logger.ErrorsText)
+				with.Warnf("%s%s %s %d %s\n%s\n", c.Prefix, logger.ID.Hex(), logger.Method, logger.StatusCode, rawPath, logger.ErrorsText)
 			} else {
-				with.Infof("%s%s %s %d %s", c.Prefix, logger.ID, logger.Method, logger.StatusCode, rawPath)
+				with.Infof("%s%s %s %d %s", c.Prefix, logger.ID.Hex(), logger.Method, logger.StatusCode, rawPath)
 			}
 		}()
 		ctx.Next()

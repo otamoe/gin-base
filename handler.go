@@ -13,6 +13,7 @@ import (
 	"github.com/otamoe/gin-server/mongo"
 	"github.com/otamoe/gin-server/notfound"
 	ginRedis "github.com/otamoe/gin-server/redis"
+	"github.com/otamoe/gin-server/resource"
 	"github.com/otamoe/gin-server/size"
 )
 
@@ -57,6 +58,9 @@ func (handler *Handler) Init(server *Server) {
 	}
 
 	handler.gin = gin.New()
+
+	// Handler name
+	handler.gin.Use(resource.Handler(handler.Name))
 
 	// Compress 中间件
 	handler.gin.Use(compress.Middleware(compress.Config{
