@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
-	"github.com/otamoe/gin-engine/name"
+	"github.com/otamoe/gin-server/name"
 	mgoModel "github.com/otamoe/mgo-model"
 	"github.com/sirupsen/logrus"
 )
@@ -17,6 +17,7 @@ import (
 type (
 	Config struct {
 		Prefix string
+		Logger *logrus.Logger
 	}
 	Logger struct {
 		mgoModel.DocumentBase `json:"-" bson:"-" binding:"-"`
@@ -165,7 +166,7 @@ func Middleware(c Config) gin.HandlerFunc {
 				rawPath += "?" + val
 			}
 
-			with := logrus.WithFields(logger.Fields)
+			with := c.Logger.WithFields(logger.Fields)
 
 			if logger.StatusCode >= 500 {
 				with.Errorf("%s%s %s %d %s\n%s\n", c.Prefix, logger.ID, logger.Method, logger.StatusCode, rawPath, logger.ErrorsText)

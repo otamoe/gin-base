@@ -12,8 +12,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis"
-	"github.com/otamoe/gin-engine/errors"
-	redisMiddleware "github.com/otamoe/gin-engine/redis"
+	"github.com/otamoe/gin-server/errors"
+	redisMiddleware "github.com/otamoe/gin-server/redis"
 )
 
 type (

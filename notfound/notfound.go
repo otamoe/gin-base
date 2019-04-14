@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/otamoe/gin-engine/errors"
+	"github.com/otamoe/gin-server/errors"
 )
 
 func Middleware() gin.HandlerFunc {

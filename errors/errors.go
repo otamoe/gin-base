@@ -131,7 +131,7 @@ func (e Error) Error() string {
 	return ""
 }
 
-func (e *Error) Copy() *Error {
+func (e *Error) Clone() *Error {
 	e2 := *e
 	e3 := e2
 	newE := &e3
