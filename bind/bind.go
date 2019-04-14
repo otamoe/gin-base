@@ -12,7 +12,7 @@ type (
 
 var CONTEXT = "GIN.ENGINE.BIND"
 
-func Bind(dataFunc DataFunc) gin.HandlerFunc {
+func Middleware(dataFunc DataFunc) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var err error
 		data := dataFunc(ctx)
@@ -25,7 +25,7 @@ func Bind(dataFunc DataFunc) gin.HandlerFunc {
 	}
 }
 
-func BindQuery(dataFunc DataFunc) gin.HandlerFunc {
+func MiddlewareQuery(dataFunc DataFunc) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var err error
 		data := dataFunc(ctx)
@@ -38,7 +38,7 @@ func BindQuery(dataFunc DataFunc) gin.HandlerFunc {
 	}
 }
 
-func BindJSON(dataFunc DataFunc) gin.HandlerFunc {
+func MiddlewareJSON(dataFunc DataFunc) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var err error
 		data := dataFunc(ctx)
