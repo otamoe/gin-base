@@ -90,6 +90,10 @@ func (handler *Handler) Init(server *Server) {
 
 }
 
+func (handler *Handler) Get() *gin.Engine {
+	return handler.gin
+}
+
 func (h serverHandler) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
 	switch req.URL.Path {
 	case "/favicon.ico":
