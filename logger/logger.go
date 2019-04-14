@@ -41,7 +41,6 @@ type (
 		Fields                map[string]interface{} `json:"fields,omitempty" bson:"fields,omitempty"`
 		CreatedAt             *time.Time             `json:"created_at" bson:"created_at"`
 	}
-	Callback func(logger *Logger)
 )
 
 var (
@@ -178,7 +177,7 @@ func Middleware(c Config) gin.HandlerFunc {
 
 			// callback
 			if val, ok := ctx.Get(CONTEXT_CALLBACK); ok && val != nil {
-				if call, ok := val.(Callback); ok {
+				if call, ok := val.(func(*Logger)); ok {
 					call(logger)
 				}
 			}

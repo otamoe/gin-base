@@ -35,7 +35,6 @@ type (
 		Params     map[string]interface{} `json:"params,omitempty"`
 		Maps       map[string]interface{} `json:"-"`
 	}
-	Callback func(errors *Errors)
 )
 
 var CONTEXT_CALLBACK = "GIN.SERVER.ERRORS.CALLBACK"
@@ -371,7 +370,7 @@ func Middleware() gin.HandlerFunc {
 
 			// callback
 			if val, ok := ctx.Get(CONTEXT_CALLBACK); ok && val != nil {
-				if call, ok := val.(Callback); ok {
+				if call, ok := val.(func(*Errors)); ok {
 					call(errors)
 				}
 			}
