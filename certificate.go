@@ -61,9 +61,7 @@ func NewCertificate(name string, hosts []string, typ string, bits int) (priv cry
 	}
 
 	subject := pkix.Name{
-		Organization:       []string{"Organization"},
-		OrganizationalUnit: []string{"Organizational Unit"},
-		CommonName:         name,
+		CommonName: name,
 	}
 
 	template := &x509.Certificate{
