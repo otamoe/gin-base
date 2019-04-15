@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -37,13 +38,16 @@ type (
 		Path                  string                 `json:"path,omitempty" bson:"path,omitempty"`
 		Query                 url.Values             `json:"query,omitempty" bson:"query,omitempty"`
 		Params                map[string]string      `json:"params,omitempty" bson:"params,omitempty"`
-		Bind                  interface{}            `json:"bind,omitempty" bson:"bind,omitempty"`
+		Bind                  map[string]interface{} `json:"bind,omitempty" bson:"bind,omitempty"`
 		Latency               time.Duration          `json:"latency,omitempty" bson:"latency,omitempty"`
 		StatusCode            int                    `json:"status_code,omitempty" bson:"status_code,omitempty"`
 		ErrorsText            string                 `json:"errors_text,omitempty" bson:"errors_text,omitempty"`
 		Fields                map[string]interface{} `json:"fields,omitempty" bson:"fields,omitempty"`
 		CreatedAt             *time.Time             `json:"created_at" bson:"created_at"`
 		Logrus                *logrus.Logger         `json:"-" bson:"-" binding:"-"`
+	}
+	BindInterface interface {
+		BindMarshal() map[string]interface{}
 	}
 )
 
@@ -135,7 +139,12 @@ func Middleware(c Config) gin.HandlerFunc {
 			// bind
 			if logger.Bind == nil {
 				if val, ok := ctx.Get(bind.CONTEXT); ok && val != nil {
-					logger.Bind = val
+					if bindInterface, ok := val.(BindInterface); ok {
+						logger.Bind = bindInterface.BindMarshal()
+					} else if jsonBytes, err := json.Marshal(val); err == nil {
+						logger.Bind = map[string]interface{}{}
+						json.Unmarshal(jsonBytes, logger.Bind)
+					}
 				}
 			}
 
@@ -160,11 +169,15 @@ func Middleware(c Config) gin.HandlerFunc {
 			}
 
 			if len(logger.Params) != 0 {
-				logger.Fields["params"] = logger.Params
+				for name, val := range logger.Params {
+					logger.Fields["param_"+name] = val
+				}
 			}
 
 			if logger.Bind != nil {
-				logger.Fields["bind"] = logger.Bind
+				for name, val := range logger.Bind {
+					logger.Fields["bind_"+name] = val
+				}
 			}
 
 			if logger.ErrorsText != "" {
@@ -177,7 +190,6 @@ func Middleware(c Config) gin.HandlerFunc {
 			}
 
 			with := logger.Logrus.WithFields(logger.Fields)
-
 			// callback
 			if val, ok := ctx.Get(CONTEXT_CALLBACK); ok && val != nil {
 				if call, ok := val.(func(*Logger)); ok {
