@@ -40,6 +40,7 @@ type (
 		ErrorsText            string                 `json:"errors_text,omitempty" bson:"errors_text,omitempty"`
 		Fields                map[string]interface{} `json:"fields,omitempty" bson:"fields,omitempty"`
 		CreatedAt             *time.Time             `json:"created_at" bson:"created_at"`
+		Logrus                *logrus.Logger         `json:"-" bson:"-" binding:"-"`
 	}
 )
 
@@ -85,6 +86,7 @@ func Middleware(c Config) gin.HandlerFunc {
 			Query:     url.Query(),
 			Fields:    map[string]interface{}{},
 			CreatedAt: now,
+			Logrus:    c.Logger,
 		}
 
 		ctx.Set(CONTEXT, logger)
@@ -166,7 +168,7 @@ func Middleware(c Config) gin.HandlerFunc {
 				rawPath += "?" + val
 			}
 
-			with := c.Logger.WithFields(logger.Fields)
+			with := logger.Logrus.WithFields(logger.Fields)
 
 			// callback
 			if val, ok := ctx.Get(CONTEXT_CALLBACK); ok && val != nil {
@@ -176,9 +178,9 @@ func Middleware(c Config) gin.HandlerFunc {
 			}
 
 			if logger.StatusCode >= 500 {
-				with.Errorf("%s%s %s/%s/%s %s %d %s\n%s\n", c.Prefix, logger.ID.Hex(), logger.Handler, logger.Type, logger.Action, logger.Method, logger.StatusCode, rawPath, logger.ErrorsText)
+				with.Errorf("%s%s %s/%s/%s %s %d %s\n%s\n\n", c.Prefix, logger.ID.Hex(), logger.Handler, logger.Type, logger.Action, logger.Method, logger.StatusCode, rawPath, logger.ErrorsText)
 			} else if logger.ErrorsText != "" {
-				with.Warnf("%s%s %s/%s/%s %s %d %s\n%s\n", c.Prefix, logger.ID.Hex(), logger.Handler, logger.Type, logger.Action, logger.Method, logger.StatusCode, rawPath, logger.ErrorsText)
+				with.Warnf("%s%s %s/%s/%s %s %d %s\n%s\n\n", c.Prefix, logger.ID.Hex(), logger.Handler, logger.Type, logger.Action, logger.Method, logger.StatusCode, rawPath, logger.ErrorsText)
 			} else {
 				with.Infof("%s%s %s/%s/%s %s %d %s", c.Prefix, logger.ID.Hex(), logger.Handler, logger.Type, logger.Action, logger.Method, logger.StatusCode, rawPath)
 			}
