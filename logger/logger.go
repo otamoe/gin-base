@@ -83,6 +83,7 @@ func Middleware(c Config) gin.HandlerFunc {
 			Host:      host,
 			Path:      url.Path,
 			Query:     url.Query(),
+			Fields:    map[string]interface{}{},
 			CreatedAt: now,
 		}
 
@@ -138,18 +139,10 @@ func Middleware(c Config) gin.HandlerFunc {
 
 			if val, ok := ctx.Get(CONTEXT_FIELDS); ok {
 				if val, ok := val.(map[string]interface{}); ok {
-					if logger.Fields == nil {
-						logger.Fields = val
-					} else {
-						for k, v := range val {
-							logger.Fields[k] = v
-						}
+					for k, v := range val {
+						logger.Fields[k] = v
 					}
 				}
-			}
-
-			if logger.Fields == nil {
-				logger.Fields = map[string]interface{}{}
 			}
 
 			logger.Fields["_ip"] = logger.IP
