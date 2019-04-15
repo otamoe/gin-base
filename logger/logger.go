@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"strings"
@@ -46,7 +47,6 @@ type (
 
 var (
 	CONTEXT          = "GIN.SERVER.LOGGER"
-	CONTEXT_FIELDS   = "GIN.SERVER.LOGGER.FIELDS"
 	CONTEXT_CALLBACK = "GIN.SERVER.LOGGER.CALBACK"
 	Model            = &mgoModel.Model{
 		Name:     "loggers",
@@ -98,6 +98,11 @@ func Middleware(c Config) gin.HandlerFunc {
 				return
 			}
 
+			// OPTIONS 请求 忽略
+			if logger.Method == "OPTIONS" && ctx.Writer.Status() < http.StatusInternalServerError {
+				return
+			}
+
 			if logger.StatusCode == 0 {
 				logger.StatusCode = ctx.Writer.Status()
 			}
@@ -125,11 +130,6 @@ func Middleware(c Config) gin.HandlerFunc {
 				}
 			}
 
-			// OPTIONS 请求 忽略
-			if logger.Method == "OPTIONS" && logger.StatusCode < 500 {
-				return
-			}
-
 			// 错误消息
 			logger.ErrorsText = strings.TrimSpace(ctx.Errors.ByType(gin.ErrorTypeAny).String())
 
@@ -139,28 +139,27 @@ func Middleware(c Config) gin.HandlerFunc {
 				logger.ErrorsText += "\n" + strings.TrimSpace(string(httprequest))
 			}
 
-			if val, ok := ctx.Get(CONTEXT_FIELDS); ok {
-				if val, ok := val.(map[string]interface{}); ok {
-					for k, v := range val {
-						logger.Fields[k] = v
-					}
-				}
-			}
-
-			logger.Fields["_ip"] = logger.IP
-			logger.Fields["_latency"] = logger.Latency
+			logger.Fields["ip"] = logger.IP
+			logger.Fields["latency"] = logger.Latency
 
 			if logger.TokenID != "" {
-				logger.Fields["_token"] = logger.TokenID.Hex()
+				logger.Fields["token_id"] = logger.TokenID.Hex()
 			}
+
 			if logger.UserID != "" {
-				logger.Fields["_user"] = logger.UserID.Hex()
+				logger.Fields["user_id"] = logger.UserID.Hex()
 			}
-			if logger.Bind != nil {
-				logger.Fields["_bind"] = logger.Bind
-			}
+
 			if len(logger.Params) != 0 {
-				logger.Fields["_params"] = logger.Params
+				logger.Fields["params"] = logger.Params
+			}
+
+			if logger.Bind != nil {
+				logger.Fields["bind"] = logger.Bind
+			}
+
+			if logger.ErrorsText != "" {
+				logger.Fields["errors_text"] = logger.ErrorsText
 			}
 
 			rawPath := logger.Path
@@ -178,9 +177,9 @@ func Middleware(c Config) gin.HandlerFunc {
 			}
 
 			if logger.StatusCode >= 500 {
-				with.Errorf("%s%s %s/%s/%s %s %d %s\n%s\n\n", c.Prefix, logger.ID.Hex(), logger.Handler, logger.Type, logger.Action, logger.Method, logger.StatusCode, rawPath, logger.ErrorsText)
+				with.Errorf("%s%s %s/%s/%s %s %d %s", c.Prefix, logger.ID.Hex(), logger.Handler, logger.Type, logger.Action, logger.Method, logger.StatusCode, rawPath)
 			} else if logger.ErrorsText != "" {
-				with.Warnf("%s%s %s/%s/%s %s %d %s\n%s\n\n", c.Prefix, logger.ID.Hex(), logger.Handler, logger.Type, logger.Action, logger.Method, logger.StatusCode, rawPath, logger.ErrorsText)
+				with.Warnf("%s%s %s/%s/%s %s %d %s", c.Prefix, logger.ID.Hex(), logger.Handler, logger.Type, logger.Action, logger.Method, logger.StatusCode, rawPath)
 			} else {
 				with.Infof("%s%s %s/%s/%s %s %d %s", c.Prefix, logger.ID.Hex(), logger.Handler, logger.Type, logger.Action, logger.Method, logger.StatusCode, rawPath)
 			}
