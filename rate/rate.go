@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"net/http"
-	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -14,6 +13,7 @@ import (
 	"github.com/go-redis/redis"
 	"github.com/otamoe/gin-server/errs"
 	redisMiddleware "github.com/otamoe/gin-server/redis"
+	"github.com/otamoe/gin-server/utils"
 )
 
 type (
@@ -162,34 +162,11 @@ func getValue(ctx *gin.Context, keys []string) (value string) {
 	if len(keys) == 0 {
 		return
 	}
-	val, ok := ctx.Get(keys[0])
-	if !ok || val == nil {
+
+	val, ok := utils.GetContextValue(ctx, keys)
+	if ok || val == nil {
 		return
 	}
-
-	dataV := reflect.ValueOf(val)
-
-	if dataV.Kind() == reflect.Interface {
-		dataV = dataV.Elem()
-	}
-
-	for i, name := range keys {
-		if i == 0 {
-			continue
-		}
-		if dataV.IsNil() {
-			break
-		}
-		if dataV.Kind() == reflect.Ptr {
-			dataV = dataV.Elem()
-		}
-		if dataV.Kind() != reflect.Struct {
-			break
-		}
-		dataV = dataV.FieldByName(name)
-	}
-
-	val = dataV.Interface()
 
 	hash := md5.New()
 	switch val.(type) {

@@ -12,7 +12,7 @@ import (
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
 	"github.com/otamoe/gin-server/bind"
-	"github.com/otamoe/gin-server/resource"
+	ginResource "github.com/otamoe/gin-server/resource"
 	mgoModel "github.com/otamoe/mgo-model"
 	"github.com/sirupsen/logrus"
 )
@@ -117,16 +117,25 @@ func Middleware(c Config) gin.HandlerFunc {
 				logger.Latency = time.Now().Sub(*now)
 			}
 
-			if logger.Handler == "" {
-				logger.Handler = ctx.GetString(resource.CONTEXT_HANDLER)
-			}
+			if val, ok := ctx.Get(ginResource.CONTEXT); ok {
+				resource := val.(ginResource.Resource)
+				if logger.Handler == "" {
+					logger.Handler = resource.Handler
+				}
 
-			if logger.Type == "" {
-				logger.Type = ctx.GetString(resource.CONTEXT_TYPE)
-			}
+				if logger.Type == "" {
+					logger.Type = resource.Type
+				}
 
-			if logger.Action == "" {
-				logger.Action = ctx.GetString(resource.CONTEXT_ACTION)
+				if logger.Action == "" {
+					logger.Action = resource.Action
+				}
+				if logger.Value == "" {
+					logger.Value = resource.GetValue()
+				}
+				for name, val := range resource.Params {
+					logger.Fields["resource_"+name] = val
+				}
 			}
 
 			if logger.Params == nil && len(ctx.Params) != 0 {
