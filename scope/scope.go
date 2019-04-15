@@ -26,19 +26,27 @@ func Middleware(required bool) gin.HandlerFunc {
 		if val, ok := ctx.Get(CONTEXT); ok {
 			params, err = val.(ScopeInterface).ValidateScope(resource)
 		} else {
+			errParams := map[string]interface{}{
+				"handler": resource.Handler,
+				"type":    resource.Type,
+				"action":  resource.Action,
+				"value":   resource.GetValue(),
+			}
+			for name, val := range resource.Params {
+				errParams[name] = val
+			}
 			err = &errs.Error{
 				Message:    "Validate Scope",
 				Type:       "scope",
 				StatusCode: http.StatusForbidden,
-				Params: map[string]interface{}{
-					"handler": resource.Handler,
-					"type":    resource.Type,
-					"action":  resource.Action,
-					"value":   resource.GetValue(),
-				},
+				Params:     errParams,
 			}
 		}
-		// ctx.Set(CONTEXT_ACTION, action)
+		if params == nil {
+			params = map[string]interface{}{}
+		}
+		ctx.Set(CONTEXT_PARAMS, params)
+		ctx.Set(CONTEXT_ERROR, err)
 		ctx.Next()
 	}
 }
