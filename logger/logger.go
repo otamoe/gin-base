@@ -118,7 +118,7 @@ func Middleware(c Config) gin.HandlerFunc {
 			}
 
 			if val, ok := ctx.Get(ginResource.CONTEXT); ok {
-				resource := val.(ginResource.Resource)
+				resource := val.(*ginResource.Resource)
 				if logger.Handler == "" {
 					logger.Handler = resource.Handler
 				}
