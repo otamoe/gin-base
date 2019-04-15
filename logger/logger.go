@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
+	"github.com/otamoe/gin-server/bind"
 	"github.com/otamoe/gin-server/resource"
 	mgoModel "github.com/otamoe/mgo-model"
 	"github.com/sirupsen/logrus"
@@ -128,6 +129,13 @@ func Middleware(c Config) gin.HandlerFunc {
 				logger.Params = map[string]string{}
 				for _, param := range ctx.Params {
 					logger.Params[param.Key] = param.Value
+				}
+			}
+
+			// bind
+			if logger.Bind == nil {
+				if val, ok := ctx.Get(bind.CONTEXT); ok && val != nil {
+					logger.Bind = val
 				}
 			}
 
