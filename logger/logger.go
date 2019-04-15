@@ -141,9 +141,11 @@ func Middleware(c Config) gin.HandlerFunc {
 				if val, ok := ctx.Get(bind.CONTEXT); ok && val != nil {
 					if bindInterface, ok := val.(BindInterface); ok {
 						logger.Bind = bindInterface.BindMarshal()
-					} else if jsonBytes, err := json.Marshal(val); err == nil {
-						logger.Bind = map[string]interface{}{}
-						json.Unmarshal(jsonBytes, logger.Bind)
+					} else {
+						if jsonBytes, err := json.Marshal(val); err == nil {
+							logger.Bind = map[string]interface{}{}
+							json.Unmarshal(jsonBytes, &logger.Bind)
+						}
 					}
 				}
 			}
