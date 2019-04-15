@@ -13,6 +13,8 @@ type (
 		Handler   string
 		Type      string
 		Action    string
+		Value     string
+		Owner     bson.ObjectId
 		ValueKeys []string
 		OwnerKeys []string
 		Params    map[string]interface{}
@@ -23,6 +25,8 @@ type (
 		Handler   string
 		Type      string
 		Action    string
+		Value     string
+		Owner     bson.ObjectId
 		ValueKeys []string
 		OwnerKeys []string
 		Params    map[string]interface{}
@@ -52,6 +56,13 @@ func Middleware(config Config) gin.HandlerFunc {
 		if config.Action != "" {
 			resource.Action = config.Action
 		}
+		if config.Value != "" {
+			resource.Value = config.Value
+		}
+
+		if config.Owner != "" {
+			resource.Owner = config.Owner
+		}
 
 		if config.ValueKeys != nil {
 			resource.ValueKeys = config.ValueKeys
@@ -68,6 +79,10 @@ func Middleware(config Config) gin.HandlerFunc {
 }
 
 func (resource *Resource) GetValue() (value string) {
+	if resource.Value != "" {
+		value = resource.Value
+		return
+	}
 	if len(resource.ValueKeys) == 0 {
 		return
 	}
@@ -85,6 +100,10 @@ func (resource *Resource) GetValue() (value string) {
 }
 
 func (resource *Resource) GetOwner() (owner bson.ObjectId) {
+	if resource.Owner != "" {
+		owner = resource.Owner
+		return
+	}
 	if len(resource.OwnerKeys) == 0 {
 		return
 	}
