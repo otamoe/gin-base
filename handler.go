@@ -60,7 +60,7 @@ func (handler *Handler) Init(server *Server) {
 	handler.gin = gin.New()
 
 	// Handler name
-	handler.gin.Use(resource.Handler(handler.Name))
+	handler.gin.Use(resource.DefaultHandler(handler.Name))
 
 	// Compress 中间件
 	handler.gin.Use(compress.Middleware(compress.Config{
