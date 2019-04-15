@@ -28,6 +28,7 @@ type (
 		Handler               string                 `json:"handler,omitempty" bson:"handler,omitempty"`
 		Type                  string                 `json:"type,omitempty" bson:"type,omitempty"`
 		Action                string                 `json:"action,omitempty" bson:"action,omitempty"`
+		Value                 string                 `json:"value,omitempty" bson:"value,omitempty"`
 		IP                    string                 `json:"ip,omitempty" bson:"ip,omitempty"`
 		Method                string                 `json:"method,omitempty" bson:"method,omitempty"`
 		Scheme                string                 `json:"scheme,omitempty" bson:"scheme,omitempty"`
@@ -177,11 +178,11 @@ func Middleware(c Config) gin.HandlerFunc {
 			}
 
 			if logger.StatusCode >= 500 {
-				with.Errorf("%s%s %s/%s/%s %s %d %s", c.Prefix, logger.ID.Hex(), logger.Handler, logger.Type, logger.Action, logger.Method, logger.StatusCode, rawPath)
+				with.Errorf("%s%s %s/%s/%s/%s %s %d %s", c.Prefix, logger.ID.Hex(), logger.Handler, logger.Type, logger.Action, logger.Value, logger.Method, logger.StatusCode, rawPath)
 			} else if logger.ErrorsText != "" {
-				with.Warnf("%s%s %s/%s/%s %s %d %s", c.Prefix, logger.ID.Hex(), logger.Handler, logger.Type, logger.Action, logger.Method, logger.StatusCode, rawPath)
+				with.Warnf("%s%s %s/%s/%s/%s %s %d %s", c.Prefix, logger.ID.Hex(), logger.Handler, logger.Type, logger.Action, logger.Value, logger.Method, logger.StatusCode, rawPath)
 			} else {
-				with.Infof("%s%s %s/%s/%s %s %d %s", c.Prefix, logger.ID.Hex(), logger.Handler, logger.Type, logger.Action, logger.Method, logger.StatusCode, rawPath)
+				with.Infof("%s%s %s/%s/%s/%s %s %d %s", c.Prefix, logger.ID.Hex(), logger.Handler, logger.Type, logger.Action, logger.Value, logger.Method, logger.StatusCode, rawPath)
 			}
 		}()
 		ctx.Next()
