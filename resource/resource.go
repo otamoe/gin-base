@@ -13,57 +13,65 @@ type (
 		Handler   string
 		Type      string
 		Action    string
-		Params    map[string]interface{}
 		ValueKeys []string
 		OwnerKeys []string
+		Params    map[string]interface{}
 	}
 	Resource struct {
-		config  *Config
 		context *gin.Context
 
-		Handler string
-		Type    string
-		Action  string
-		Params  map[string]interface{}
+		Handler   string
+		Type      string
+		Action    string
+		ValueKeys []string
+		OwnerKeys []string
+		Params    map[string]interface{}
 	}
 )
 
 var CONTEXT = "GIN.SERVER.RESOURCE"
-var DEFAULT_HANDLER = "GIN.SERVER.RESOURCE.HANDLER"
-
-func DefaultHandler(handler string) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		ctx.Set(DEFAULT_HANDLER, handler)
-		ctx.Next()
-	}
-}
 
 func Middleware(config Config) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		resource := &Resource{
-			config:  &config,
-			context: ctx,
-			Handler: config.Handler,
-			Type:    config.Type,
-			Action:  config.Action,
-			Params:  map[string]interface{}{},
+		var resource *Resource
+		if val, ok := ctx.Get(CONTEXT); ok {
+			resource = val.(*Resource)
+		} else {
+			resource = &Resource{
+				context: ctx,
+				Params:  map[string]interface{}{},
+			}
+			ctx.Set(CONTEXT, resource)
 		}
-		if resource.Handler == "" {
-			resource.Handler = ctx.GetString(DEFAULT_HANDLER)
+		if config.Handler != "" {
+			resource.Handler = config.Handler
 		}
-		for name, val := range config.Params {
-			resource.Params[name] = val
+		if config.Type != "" {
+			resource.Type = config.Type
 		}
-		ctx.Set(CONTEXT, resource)
+		if config.Action != "" {
+			resource.Action = config.Action
+		}
+
+		if config.ValueKeys != nil {
+			resource.ValueKeys = config.ValueKeys
+		}
+		if config.OwnerKeys != nil {
+			resource.OwnerKeys = config.OwnerKeys
+		}
+
+		for key, val := range config.Params {
+			resource.Params[key] = val
+		}
 		ctx.Next()
 	}
 }
 
 func (resource *Resource) GetValue() (value string) {
-	if len(resource.config.ValueKeys) == 0 {
+	if len(resource.ValueKeys) == 0 {
 		return
 	}
-	if val, ok := utils.GetContextValue(resource.context, resource.config.ValueKeys); ok && val != nil {
+	if val, ok := utils.GetContextValue(resource.context, resource.ValueKeys); ok && val != nil {
 		switch val := val.(type) {
 		case bson.ObjectId:
 			value = val.Hex()
@@ -77,10 +85,10 @@ func (resource *Resource) GetValue() (value string) {
 }
 
 func (resource *Resource) GetOwner() (owner bson.ObjectId) {
-	if len(resource.config.OwnerKeys) == 0 {
+	if len(resource.OwnerKeys) == 0 {
 		return
 	}
-	if val, ok := utils.GetContextValue(resource.context, resource.config.OwnerKeys); ok && val != nil {
+	if val, ok := utils.GetContextValue(resource.context, resource.OwnerKeys); ok && val != nil {
 		switch val := val.(type) {
 		case bson.ObjectId:
 			owner = val
