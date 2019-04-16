@@ -17,6 +17,11 @@ type (
 var CONTEXT = "GIN.SERVER.SCOPE"
 var CONTEXT_PARAMS = "GIN.SERVER.SCOPE.PARAMS"
 var CONTEXT_ERROR = "GIN.SERVER.SCOPE.ERROR"
+var ErrRequired = &errs.Error{
+	Message:    "You are not logged in",
+	Type:       "token",
+	StatusCode: http.StatusUnauthorized,
+}
 
 func Middleware(required bool) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
@@ -26,27 +31,18 @@ func Middleware(required bool) gin.HandlerFunc {
 		if val, ok := ctx.Get(CONTEXT); ok {
 			params, err = val.(ScopeInterface).ValidateScope(resource)
 		} else {
-			errParams := map[string]interface{}{
-				"handler": resource.Handler,
-				"type":    resource.Type,
-				"action":  resource.Action,
-				"value":   resource.GetValue(),
-			}
-			for name, val := range resource.Params {
-				errParams[name] = val
-			}
-			err = &errs.Error{
-				Message:    "Validate Scope",
-				Type:       "scope",
-				StatusCode: http.StatusForbidden,
-				Params:     errParams,
-			}
+			err = ErrRequired
 		}
 		if params == nil {
 			params = map[string]interface{}{}
 		}
 		ctx.Set(CONTEXT_PARAMS, params)
 		ctx.Set(CONTEXT_ERROR, err)
-		ctx.Next()
+		if required {
+			ctx.Error(err)
+			ctx.Abort()
+		} else {
+			ctx.Next()
+		}
 	}
 }

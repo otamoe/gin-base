@@ -92,49 +92,40 @@ func (resource *Resource) Config(config Config) {
 		resource.Params[key] = val
 	}
 }
-func (resource *Resource) GetValue() (value string) {
-	if resource.Value != "" {
-		value = resource.Value
-		return
-	}
-	if len(resource.ValueKeys) == 0 {
-		return
-	}
-	if val, ok := utils.GetContextValue(resource.context, resource.ValueKeys); ok && val != nil {
-		switch val := val.(type) {
-		case bson.ObjectId:
-			value = val.Hex()
-		case fmt.Stringer:
-			value = val.String()
-		default:
-			value = fmt.Sprintf("%+v", val)
+func (resource *Resource) GetValue() string {
+	if resource.Value == "" && len(resource.ValueKeys) != 0 {
+		if val, ok := utils.GetContextValue(resource.context, resource.ValueKeys); ok && val != nil {
+			switch val := val.(type) {
+			case bson.ObjectId:
+				resource.Value = val.Hex()
+			case fmt.Stringer:
+				resource.Value = val.String()
+			default:
+				resource.Value = fmt.Sprintf("%+v", val)
+			}
 		}
 	}
-	return
+
+	return resource.Value
 }
 
-func (resource *Resource) GetOwner() (owner bson.ObjectId) {
-	if resource.Owner != "" {
-		owner = resource.Owner
-		return
-	}
-	if len(resource.OwnerKeys) == 0 {
-		return
-	}
-	if val, ok := utils.GetContextValue(resource.context, resource.OwnerKeys); ok && val != nil {
-		switch val := val.(type) {
-		case bson.ObjectId:
-			owner = val
-		case fmt.Stringer:
-			if bson.IsObjectIdHex(val.String()) {
-				owner = bson.ObjectIdHex(val.String())
-			}
-		default:
-			val2 := fmt.Sprintf("%+v", val)
-			if bson.IsObjectIdHex(val2) {
-				owner = bson.ObjectIdHex(val2)
+func (resource *Resource) GetOwner() bson.ObjectId {
+	if resource.Owner == "" && len(resource.OwnerKeys) != 0 {
+		if val, ok := utils.GetContextValue(resource.context, resource.OwnerKeys); ok && val != nil {
+			switch val := val.(type) {
+			case bson.ObjectId:
+				resource.Owner = val
+			case fmt.Stringer:
+				if bson.IsObjectIdHex(val.String()) {
+					resource.Owner = bson.ObjectIdHex(val.String())
+				}
+			default:
+				val2 := fmt.Sprintf("%+v", val)
+				if bson.IsObjectIdHex(val2) {
+					resource.Owner = bson.ObjectIdHex(val2)
+				}
 			}
 		}
 	}
-	return
+	return resource.Owner
 }
