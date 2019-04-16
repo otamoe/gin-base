@@ -133,9 +133,16 @@ func Middleware(c Config) gin.HandlerFunc {
 				if logger.Value == "" {
 					logger.Value = resource.GetValue()
 				}
-				logger.Fields["resource_owner"] = resource.GetOwner()
+				if owner := resource.GetOwner(); owner != "" {
+					logger.Fields["resource_owner"] = owner.Hex()
+				}
 				for name, val := range resource.Params {
-					logger.Fields["resource_"+name] = val
+					switch val := val.(type) {
+					case bson.ObjectId:
+						logger.Fields["resource_"+name] = val.Hex()
+					default:
+						logger.Fields["resource_"+name] = val
+					}
 				}
 			}
 
