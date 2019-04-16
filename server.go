@@ -26,6 +26,7 @@ type (
 		ReadHeaderTimeout time.Duration `json:"read_header_timeout,omitempty"`
 		WriteTimeout      time.Duration `json:"write_timeout,omitempty"`
 		IdleTimeout       time.Duration `json:"idle_timeout,omitempty"`
+		ShutdownTimeout   time.Duration `json:"shutdown_timeout,omitempty"`
 
 		Compress *Compress  `json:"compress,omitempty"`
 		Logger   *Logger    `json:"logger,omitempty"`
@@ -92,6 +93,9 @@ func (server *Server) Init() *Server {
 	}
 	if server.IdleTimeout == 0 {
 		server.IdleTimeout = time.Second * 300
+	}
+	if server.ShutdownTimeout == 0 {
+		server.ShutdownTimeout = server.WriteTimeout + server.ReadTimeout
 	}
 
 	// gin
@@ -215,7 +219,7 @@ func (server *Server) Start() {
 	<-quit
 	log.Println("Shutdown Server ...")
 	//
-	ctx, cancel := context.WithTimeout(context.Background(), server.ReadTimeout+server.WriteTimeout+server.ReadHeaderTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), server.ShutdownTimeout)
 	defer cancel()
 	if err := httpServer.Shutdown(ctx); err != nil {
 		log.Panic("Server Shutdown:", err)
