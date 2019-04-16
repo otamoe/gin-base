@@ -196,6 +196,9 @@ func Middleware(c Config) gin.HandlerFunc {
 
 			if logger.Bind != nil {
 				for name, val := range logger.Bind {
+					if val == nil || val == "" {
+						continue
+					}
 					logger.Fields["bind_"+name] = val
 				}
 			}
@@ -214,6 +217,9 @@ func Middleware(c Config) gin.HandlerFunc {
 			}
 
 			for name, val := range logger.Resource.Params {
+				if val == nil || val == "" {
+					continue
+				}
 				switch val := val.(type) {
 				case bson.ObjectId:
 					logger.Fields["resource_"+name] = val.Hex()
