@@ -59,10 +59,8 @@ func (handler *Handler) Init(server *Server) {
 
 	handler.gin = gin.New()
 
-	// Handler name
-	handler.gin.Use(resource.Middleware(resource.Config{
-		Handler: handler.Name,
-	}))
+	// resource
+	handler.gin.Use(resource.Middleware(resource.Config{}))
 
 	// Compress 中间件
 	handler.gin.Use(compress.Middleware(compress.Config{

@@ -23,12 +23,12 @@ type (
 		Logger *logrus.Logger
 	}
 	Resource struct {
-		Handler string        `json:"handler,omitempty" bson:"handler,omitempty"`
-		Type    string        `json:"type,omitempty" bson:"type,omitempty"`
-		Action  string        `json:"action,omitempty" bson:"action,omitempty"`
-		Value   string        `json:"value,omitempty" bson:"value,omitempty"`
-		OwnerID bson.ObjectId `json:"owner_id,omitempty" bson:"owner,omitempty"`
-		Params  map[string]interface{}
+		Application bson.ObjectId `json:"application,omitempty" bson:"application,omitempty"`
+		Type        string        `json:"type,omitempty" bson:"type,omitempty"`
+		Action      string        `json:"action,omitempty" bson:"action,omitempty"`
+		Value       string        `json:"value,omitempty" bson:"value,omitempty"`
+		OwnerID     bson.ObjectId `json:"owner_id,omitempty" bson:"owner,omitempty"`
+		Params      map[string]interface{}
 	}
 	Logger struct {
 		mgoModel.DocumentBase `json:"-" bson:"-" binding:"-"`
@@ -124,8 +124,8 @@ func Middleware(c Config) gin.HandlerFunc {
 
 			if val, ok := ctx.Get(ginResource.CONTEXT); ok {
 				resource := val.(*ginResource.Resource)
-				if logger.Resource.Handler == "" {
-					logger.Resource.Handler = resource.Handler
+				if logger.Resource.Application == "" {
+					logger.Resource.Application = resource.Application
 				}
 
 				if logger.Resource.Type == "" {
@@ -203,8 +203,8 @@ func Middleware(c Config) gin.HandlerFunc {
 				}
 			}
 
-			if logger.Resource.Handler != "" {
-				logger.Fields["resource_handler"] = logger.Resource.Handler
+			if logger.Resource.Application != "" {
+				logger.Fields["resource_application"] = logger.Resource.Application.Hex()
 			}
 			if logger.Resource.Type != "" {
 				logger.Fields["resource_type"] = logger.Resource.Type

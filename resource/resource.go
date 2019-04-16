@@ -11,26 +11,26 @@ import (
 
 type (
 	Config struct {
-		Handler   string
-		Type      string
-		Action    string
-		Value     string
-		Owner     bson.ObjectId
-		ValueKeys []string
-		OwnerKeys []string
-		Params    map[string]interface{}
+		Application bson.ObjectId
+		Type        string
+		Action      string
+		Value       string
+		Owner       bson.ObjectId
+		ValueKeys   []string
+		OwnerKeys   []string
+		Params      map[string]interface{}
 	}
 	Resource struct {
-		context *gin.Context
-
-		Handler   string
-		Type      string
-		Action    string
-		Value     string
-		Owner     bson.ObjectId
+		context   *gin.Context
 		ValueKeys []string
 		OwnerKeys []string
-		Params    map[string]interface{}
+
+		Application bson.ObjectId
+		Type        string
+		Action      string
+		Value       string
+		Owner       bson.ObjectId
+		Params      map[string]interface{}
 	}
 )
 
@@ -64,8 +64,8 @@ func Middleware(config Config) gin.HandlerFunc {
 }
 
 func (resource *Resource) Config(config Config) {
-	if config.Handler != "" {
-		resource.Handler = config.Handler
+	if config.Application != "" {
+		resource.Application = config.Application
 	}
 	if config.Type != "" {
 		resource.Type = config.Type
