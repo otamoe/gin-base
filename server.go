@@ -95,7 +95,7 @@ func (server *Server) Init() *Server {
 		server.IdleTimeout = time.Second * 300
 	}
 	if server.ShutdownTimeout == 0 {
-		server.ShutdownTimeout = server.WriteTimeout + server.ReadTimeout + server.ReadHeaderTimeouta
+		server.ShutdownTimeout = server.WriteTimeout + server.ReadTimeout + server.ReadHeaderTimeout
 	}
 
 	// gin
