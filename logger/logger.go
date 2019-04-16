@@ -133,6 +133,7 @@ func Middleware(c Config) gin.HandlerFunc {
 				if logger.Value == "" {
 					logger.Value = resource.GetValue()
 				}
+				logger.Fields["resource_owner"] = resource.GetOwner()
 				for name, val := range resource.Params {
 					logger.Fields["resource_"+name] = val
 				}
