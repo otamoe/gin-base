@@ -22,15 +22,19 @@ type (
 		Prefix string
 		Logger *logrus.Logger
 	}
+	Resource struct {
+		Handler string        `json:"handler,omitempty" bson:"handler,omitempty"`
+		Type    string        `json:"type,omitempty" bson:"type,omitempty"`
+		Action  string        `json:"action,omitempty" bson:"action,omitempty"`
+		Value   string        `json:"value,omitempty" bson:"value,omitempty"`
+		OwnerID bson.ObjectId `json:"owner_id,omitempty" bson:"owner,omitempty"`
+		Params  map[string]interface{}
+	}
 	Logger struct {
 		mgoModel.DocumentBase `json:"-" bson:"-" binding:"-"`
 		ID                    bson.ObjectId          `json:"_id" bson:"_id"`
-		UserID                bson.ObjectId          `json:"user_id,omitempty" bson:"user,omitempty"`
 		TokenID               bson.ObjectId          `json:"token_id,omitempty" bson:"token,omitempty"`
-		Handler               string                 `json:"handler,omitempty" bson:"handler,omitempty"`
-		Type                  string                 `json:"type,omitempty" bson:"type,omitempty"`
-		Action                string                 `json:"action,omitempty" bson:"action,omitempty"`
-		Value                 string                 `json:"value,omitempty" bson:"value,omitempty"`
+		UserID                bson.ObjectId          `json:"user_id,omitempty" bson:"user,omitempty"`
 		IP                    string                 `json:"ip,omitempty" bson:"ip,omitempty"`
 		Method                string                 `json:"method,omitempty" bson:"method,omitempty"`
 		Scheme                string                 `json:"scheme,omitempty" bson:"scheme,omitempty"`
@@ -38,6 +42,7 @@ type (
 		Path                  string                 `json:"path,omitempty" bson:"path,omitempty"`
 		Query                 url.Values             `json:"query,omitempty" bson:"query,omitempty"`
 		Params                map[string]string      `json:"params,omitempty" bson:"params,omitempty"`
+		Resource              Resource               `json:"resource,omitempty" bson:"resource,omitempty"`
 		Bind                  map[string]interface{} `json:"bind,omitempty" bson:"bind,omitempty"`
 		Latency               time.Duration          `json:"latency,omitempty" bson:"latency,omitempty"`
 		StatusCode            int                    `json:"status_code,omitempty" bson:"status_code,omitempty"`
@@ -119,30 +124,27 @@ func Middleware(c Config) gin.HandlerFunc {
 
 			if val, ok := ctx.Get(ginResource.CONTEXT); ok {
 				resource := val.(*ginResource.Resource)
-				if logger.Handler == "" {
-					logger.Handler = resource.Handler
+				if logger.Resource.Handler == "" {
+					logger.Resource.Handler = resource.Handler
 				}
 
-				if logger.Type == "" {
-					logger.Type = resource.Type
+				if logger.Resource.Type == "" {
+					logger.Resource.Type = resource.Type
 				}
 
-				if logger.Action == "" {
-					logger.Action = resource.Action
+				if logger.Resource.Action == "" {
+					logger.Resource.Action = resource.Action
 				}
-				if logger.Value == "" {
-					logger.Value = resource.GetValue()
+				if logger.Resource.Value == "" {
+					logger.Resource.Value = resource.GetValue()
 				}
-				if owner := resource.GetOwner(); owner != "" {
-					logger.Fields["resource_owner"] = owner.Hex()
-				}
-				for name, val := range resource.Params {
-					switch val := val.(type) {
-					case bson.ObjectId:
-						logger.Fields["resource_"+name] = val.Hex()
-					default:
-						logger.Fields["resource_"+name] = val
+				if logger.Resource.OwnerID != "" {
+					if owner := resource.GetOwner(); owner != "" {
+						logger.Resource.OwnerID = owner
 					}
+				}
+				if logger.Resource.Params == nil {
+					logger.Resource.Params = resource.Params
 				}
 			}
 
@@ -182,7 +184,6 @@ func Middleware(c Config) gin.HandlerFunc {
 			if logger.TokenID != "" {
 				logger.Fields["token_id"] = logger.TokenID.Hex()
 			}
-
 			if logger.UserID != "" {
 				logger.Fields["user_id"] = logger.UserID.Hex()
 			}
@@ -199,6 +200,28 @@ func Middleware(c Config) gin.HandlerFunc {
 				}
 			}
 
+			if logger.Resource.Handler != "" {
+				logger.Fields["resource_handler"] = logger.Resource.Handler
+			}
+			if logger.Resource.Type != "" {
+				logger.Fields["resource_type"] = logger.Resource.Type
+			}
+			if logger.Resource.Value != "" {
+				logger.Fields["resource_value"] = logger.Resource.Value
+			}
+			if logger.Resource.OwnerID != "" {
+				logger.Fields["resource_owner"] = logger.Resource.OwnerID.Hex()
+			}
+
+			for name, val := range logger.Resource.Params {
+				switch val := val.(type) {
+				case bson.ObjectId:
+					logger.Fields["resource_"+name] = val.Hex()
+				default:
+					logger.Fields["resource_"+name] = val
+				}
+			}
+
 			if logger.ErrorsText != "" {
 				logger.Fields["errors_text"] = logger.ErrorsText
 			}
@@ -209,6 +232,7 @@ func Middleware(c Config) gin.HandlerFunc {
 			}
 
 			with := logger.Logrus.WithFields(logger.Fields)
+
 			// callback
 			if val, ok := ctx.Get(CONTEXT_CALLBACK); ok && val != nil {
 				if call, ok := val.(func(*Logger)); ok {
@@ -217,11 +241,11 @@ func Middleware(c Config) gin.HandlerFunc {
 			}
 
 			if logger.StatusCode >= 500 {
-				with.Errorf("%s%s %s/%s/%s/%s %s %d %s", c.Prefix, logger.ID.Hex(), logger.Handler, logger.Type, logger.Action, logger.Value, logger.Method, logger.StatusCode, rawPath)
+				with.Errorf("%s%s %s %d %s", c.Prefix, logger.ID.Hex(), logger.Method, logger.StatusCode, rawPath)
 			} else if logger.ErrorsText != "" {
-				with.Warnf("%s%s %s/%s/%s/%s %s %d %s", c.Prefix, logger.ID.Hex(), logger.Handler, logger.Type, logger.Action, logger.Value, logger.Method, logger.StatusCode, rawPath)
+				with.Warnf("%s%s %s %d %s", c.Prefix, logger.ID.Hex(), logger.Method, logger.StatusCode, rawPath)
 			} else {
-				with.Infof("%s%s %s/%s/%s/%s %s %d %s", c.Prefix, logger.ID.Hex(), logger.Handler, logger.Type, logger.Action, logger.Value, logger.Method, logger.StatusCode, rawPath)
+				with.Infof("%s%s %s %d %s", c.Prefix, logger.ID.Hex(), logger.Method, logger.StatusCode, rawPath)
 			}
 		}()
 		ctx.Next()
