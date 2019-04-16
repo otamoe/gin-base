@@ -39,7 +39,11 @@ var CONTEXT = "GIN.SERVER.RESOURCE"
 var handlersMap = sync.Map{}
 
 func Handler(handler gin.HandlerFunc, config Config) {
-	handlersMap.Store(utils.NameOfFunction(handler), config)
+	name := utils.NameOfFunction(handler)
+	if _, ok := handlersMap.Load(name); ok {
+		panic(name + " has exists")
+	}
+	handlersMap.Store(name, config)
 	return
 }
 
