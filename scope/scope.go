@@ -38,7 +38,7 @@ func Middleware(required bool) gin.HandlerFunc {
 		}
 		ctx.Set(CONTEXT_PARAMS, params)
 		ctx.Set(CONTEXT_ERROR, err)
-		if required {
+		if err != nil && required {
 			ctx.Error(err)
 			ctx.Abort()
 		} else {
