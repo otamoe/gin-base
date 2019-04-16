@@ -2,6 +2,7 @@ package resource
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/gin-gonic/gin"
 	"github.com/globalsign/mgo/bson"
@@ -35,6 +36,13 @@ type (
 
 var CONTEXT = "GIN.SERVER.RESOURCE"
 
+var handlersMap = sync.Map{}
+
+func Handler(handler gin.HandlerFunc, config Config) {
+	handlersMap.Store(utils.NameOfFunction(handler), config)
+	return
+}
+
 func Middleware(config Config) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var resource *Resource
@@ -47,37 +55,43 @@ func Middleware(config Config) gin.HandlerFunc {
 			}
 			ctx.Set(CONTEXT, resource)
 		}
-		if config.Handler != "" {
-			resource.Handler = config.Handler
-		}
-		if config.Type != "" {
-			resource.Type = config.Type
-		}
-		if config.Action != "" {
-			resource.Action = config.Action
-		}
-		if config.Value != "" {
-			resource.Value = config.Value
-		}
-
-		if config.Owner != "" {
-			resource.Owner = config.Owner
-		}
-
-		if config.ValueKeys != nil {
-			resource.ValueKeys = config.ValueKeys
-		}
-		if config.OwnerKeys != nil {
-			resource.OwnerKeys = config.OwnerKeys
-		}
-
-		for key, val := range config.Params {
-			resource.Params[key] = val
+		resource.Config(config)
+		if val, ok := handlersMap.Load(ctx.HandlerName()); ok && val != nil {
+			resource.Config(val.(Config))
 		}
 		ctx.Next()
 	}
 }
 
+func (resource *Resource) Config(config Config) {
+	if config.Handler != "" {
+		resource.Handler = config.Handler
+	}
+	if config.Type != "" {
+		resource.Type = config.Type
+	}
+	if config.Action != "" {
+		resource.Action = config.Action
+	}
+	if config.Value != "" {
+		resource.Value = config.Value
+	}
+
+	if config.Owner != "" {
+		resource.Owner = config.Owner
+	}
+
+	if config.ValueKeys != nil {
+		resource.ValueKeys = config.ValueKeys
+	}
+	if config.OwnerKeys != nil {
+		resource.OwnerKeys = config.OwnerKeys
+	}
+
+	for key, val := range config.Params {
+		resource.Params[key] = val
+	}
+}
 func (resource *Resource) GetValue() (value string) {
 	if resource.Value != "" {
 		value = resource.Value

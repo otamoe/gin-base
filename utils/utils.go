@@ -2,6 +2,7 @@ package utils
 
 import (
 	"reflect"
+	"runtime"
 
 	"github.com/gin-gonic/gin"
 )
@@ -42,4 +43,8 @@ func GetContextValue(ctx *gin.Context, keys []string) (value interface{}, ok boo
 
 	value = dataV.Interface()
 	return
+}
+
+func NameOfFunction(f interface{}) string {
+	return runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name()
 }
