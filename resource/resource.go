@@ -40,12 +40,16 @@ var CONTEXT = "GIN.SERVER.RESOURCE"
 var handlersMap = sync.Map{}
 
 func Handler(handler gin.HandlerFunc, config Config) {
-	key := reflect.ValueOf(handler)
+	key := Reflect(handler)
 	if _, ok := handlersMap.Load(key); ok {
 		panic("Resource: " + utils.NameOfFunction(handler) + " has exists")
 	}
 	handlersMap.Store(key, config)
 	return
+}
+
+func Reflect(handler gin.HandlerFunc) reflect.Value {
+	return reflect.ValueOf(handler)
 }
 
 func Middleware(config Config) gin.HandlerFunc {
