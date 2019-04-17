@@ -180,7 +180,9 @@ func (server *Server) Start() {
 	handler := serverHandler{}
 	for _, val := range server.Handlers {
 		for _, host := range val.Hosts {
-			handler[host] = val.gin
+			if val.Get() != nil {
+				handler[host] = val.Get()
+			}
 		}
 	}
 
