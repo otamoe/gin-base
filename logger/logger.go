@@ -138,10 +138,8 @@ func Middleware(c Config) gin.HandlerFunc {
 				if logger.Resource.Value == "" {
 					logger.Resource.Value = resource.GetValue()
 				}
-				if logger.Resource.OwnerID != "" {
-					if owner := resource.GetOwner(); owner != "" {
-						logger.Resource.OwnerID = owner
-					}
+				if logger.Resource.OwnerID == "" {
+					logger.Resource.OwnerID = resource.GetOwner()
 				}
 				if logger.Resource.Params == nil {
 					logger.Resource.Params = resource.Params
