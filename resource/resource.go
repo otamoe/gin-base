@@ -39,11 +39,11 @@ var CONTEXT = "GIN.SERVER.RESOURCE"
 var handlersMap = sync.Map{}
 
 func Handler(handler gin.HandlerFunc, config Config) {
-	name := utils.NameOfFunction(handler)
-	if _, ok := handlersMap.Load(name); ok {
-		panic(name + " has exists")
+	x := fmt.Sprintf("%x", handler)
+	if _, ok := handlersMap.Load(x); ok {
+		panic("Resource: " + utils.NameOfFunction(handler) + " has exists")
 	}
-	handlersMap.Store(name, config)
+	handlersMap.Store(x, config)
 	return
 }
 
@@ -60,7 +60,7 @@ func Middleware(config Config) gin.HandlerFunc {
 			ctx.Set(CONTEXT, resource)
 		}
 		resource.Config(config)
-		if val, ok := handlersMap.Load(ctx.HandlerName()); ok && val != nil {
+		if val, ok := handlersMap.Load(fmt.Sprintf("%x", ctx.Handler())); ok && val != nil {
 			resource.Config(val.(Config))
 		}
 		ctx.Next()

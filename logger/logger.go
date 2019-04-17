@@ -204,16 +204,12 @@ func Middleware(c Config) gin.HandlerFunc {
 			}
 
 			if logger.Resource.Application != "" {
-				logger.Fields["resource_application"] = logger.Resource.Application.Hex()
-			}
-			if logger.Resource.Type != "" {
-				logger.Fields["resource_type"] = logger.Resource.Type
-			}
-			if logger.Resource.Action != "" {
-				logger.Fields["resource_action"] = logger.Resource.Action
-			}
-			if logger.Resource.Value != "" {
-				logger.Fields["resource_value"] = logger.Resource.Value
+				logger.Fields["resource"] = strings.Join([]string{
+					logger.Resource.Application.Hex(),
+					logger.Resource.Type,
+					logger.Resource.Action,
+					logger.Resource.Value,
+				}, ":")
 			}
 			if logger.Resource.OwnerID != "" {
 				logger.Fields["resource_owner"] = logger.Resource.OwnerID.Hex()
