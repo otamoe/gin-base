@@ -2,6 +2,7 @@ package resource
 
 import (
 	"fmt"
+	"reflect"
 	"sync"
 
 	"github.com/gin-gonic/gin"
@@ -39,11 +40,11 @@ var CONTEXT = "GIN.SERVER.RESOURCE"
 var handlersMap = sync.Map{}
 
 func Handler(handler gin.HandlerFunc, config Config) {
-	x := fmt.Sprintf("%x", handler)
-	if _, ok := handlersMap.Load(x); ok {
+	key := reflect.ValueOf(handler)
+	if _, ok := handlersMap.Load(key); ok {
 		panic("Resource: " + utils.NameOfFunction(handler) + " has exists")
 	}
-	handlersMap.Store(x, config)
+	handlersMap.Store(key, config)
 	return
 }
 
@@ -60,7 +61,7 @@ func Middleware(config Config) gin.HandlerFunc {
 			ctx.Set(CONTEXT, resource)
 		}
 		resource.Config(config)
-		if val, ok := handlersMap.Load(fmt.Sprintf("%x", ctx.Handler())); ok && val != nil {
+		if val, ok := handlersMap.Load(reflect.ValueOf(ctx.Handler())); ok && val != nil {
 			resource.Config(val.(Config))
 		}
 		ctx.Next()
