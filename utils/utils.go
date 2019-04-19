@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	RandNumer = []byte("0123456789")
+	RandNumber = []byte("0123456789")
 
 	RandAlpha       = []byte("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 	RandAlphaNumber = []byte("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
