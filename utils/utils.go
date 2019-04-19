@@ -11,6 +11,16 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+var (
+	RandNumer = []byte("0123456789")
+
+	RandAlpha       = []byte("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+	RandAlphaNumber = []byte("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+	RandAlphaLower       = []byte("abcdefghijklmnopqrstuvwxyz")
+	RandAlphaLowerNumber = []byte("0123456789abcdefghijklmnopqrstuvwxyz")
+)
+
 func GetContextValue(ctx *gin.Context, keys []string) (value interface{}, ok bool) {
 	if len(keys) == 0 {
 		return
