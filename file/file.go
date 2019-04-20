@@ -24,13 +24,13 @@ func filtered(val string) bool {
 	for _, name := range strings.FieldsFunc(val, isSlashRune) {
 		name = strings.TrimSpace(name)
 		if name == "" {
-			return false
+			return true
 		}
 		if name[0] == '.' {
-			return false
+			return true
 		}
 	}
-	return true
+	return false
 }
 
 func isSlashRune(r rune) bool {
