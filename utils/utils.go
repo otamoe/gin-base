@@ -67,6 +67,22 @@ func IsEmpty(val interface{}) bool {
 	return val == nil || val == 0 || val == "" || val == false
 }
 
+func RandInt(n int) int {
+	bn, err := rand.Int(rand.Reader, big.NewInt(int64(n)))
+	if err != nil {
+		panic(err)
+	}
+	return int(bn.Int64())
+}
+
+func RandInt64(n int64) int64 {
+	bn, err := rand.Int(rand.Reader, big.NewInt(n))
+	if err != nil {
+		panic(err)
+	}
+	return bn.Int64()
+}
+
 func RandRune(n int, runes []rune) []rune {
 	b := make([]rune, n)
 	for i := range b {
