@@ -34,7 +34,7 @@ type (
 		Mongo    *Mongo     `json:"mongo,omitempty"`
 		Handlers []*Handler `json:"handlers,omitempty"`
 
-		httpServer *http.Server `json:"-"`
+		httpServer *http.Server
 	}
 )
 
