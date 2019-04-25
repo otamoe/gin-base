@@ -33,6 +33,8 @@ type (
 		Redis    *Redis     `json:"redis,omitempty"`
 		Mongo    *Mongo     `json:"mongo,omitempty"`
 		Handlers []*Handler `json:"handlers,omitempty"`
+
+		httpServer *http.Server `json:"-"`
 	}
 )
 
@@ -147,7 +149,10 @@ func (server *Server) Get(name string, create bool) (handler *Handler) {
 	return
 }
 
-func (server *Server) Start() {
+func (server *Server) GetHttpServer() *http.Server {
+	if server.httpServer != nil {
+		return server.httpServer
+	}
 	var tlsConfig *tls.Config
 	if len(server.Certificates) != 0 {
 		var certificates []tls.Certificate
@@ -186,7 +191,7 @@ func (server *Server) Start() {
 		}
 	}
 
-	httpServer := http.Server{
+	server.httpServer = &http.Server{
 		Addr:              server.Addr,
 		Handler:           handler,
 		TLSConfig:         tlsConfig,
@@ -198,10 +203,16 @@ func (server *Server) Start() {
 		ErrorLog:          log.New(logWriter, "", 0),
 	}
 
+	return server.httpServer
+}
+
+func (server *Server) Start() {
+
+	httpServer := server.GetHttpServer()
 	// 执行
 	go func() {
 		var err error
-		if tlsConfig == nil {
+		if httpServer.TLSConfig == nil {
 			err = httpServer.ListenAndServe()
 		} else {
 			err = httpServer.ListenAndServeTLS("", "")
@@ -212,7 +223,6 @@ func (server *Server) Start() {
 	}()
 
 	// Wait for interrupt signal to gracefully shutdown the server with
-	// a timeout of 5 seconds.
 	quit := make(chan os.Signal, 1)
 	// kill (no param) default send syscanll.SIGTERM
 	// kill -2 is syscall.SIGINT
