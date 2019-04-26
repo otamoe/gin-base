@@ -58,7 +58,7 @@ func (c *Cache) Match() bool {
 	etag := ctx.Writer.Header().Get("etag")
 	lastModified := ctx.Writer.Header().Get("last-modified")
 
-	if ifModifiedSince != "" && ifModifiedSince != lastModified {
+	if ifUnmodifiedSince != "" && ifUnmodifiedSince != lastModified {
 		ctx.AbortWithStatus(http.StatusPreconditionFailed)
 		return true
 	}
@@ -68,7 +68,7 @@ func (c *Cache) Match() bool {
 		return true
 	}
 
-	if ifUnmodifiedSince != "" && ifUnmodifiedSince != lastModified {
+	if ifModifiedSince != "" && ifModifiedSince != lastModified {
 		return false
 	}
 	if ifNoneMatch != "" && ifNoneMatch != etag {
