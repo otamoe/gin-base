@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -79,6 +80,49 @@ func validationLocale(fl validator.FieldLevel) bool {
 
 func validationPhone(fl validator.FieldLevel) bool {
 	return false
+}
+
+func validationModulo(fl validator.FieldLevel) bool {
+	field := fl.Field()
+	param := strings.Split(fl.Param(), " ")
+	if param[0] == "" {
+		param[0] = "0"
+	}
+	if len(param) == 1 {
+		param = append(param, "0")
+	}
+	switch field.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		var val int64
+		var mod int64
+		var surplus int64
+		var err error
+
+		switch field.Kind() {
+		case reflect.Int:
+			val = int64(field.Interface().(int))
+		case reflect.Int8:
+			val = int64(field.Interface().(int8))
+		case reflect.Int16:
+			val = int64(field.Interface().(int16))
+		case reflect.Int32:
+			val = int64(field.Interface().(int32))
+		default:
+			val = field.Interface().(int64)
+		}
+		if mod, err = strconv.ParseInt(param[0], 10, 64); err != nil {
+			return false
+		}
+		if surplus, err = strconv.ParseInt(param[1], 10, 64); err != nil {
+			return false
+		}
+		if (val % mod) == surplus {
+			return true
+		}
+		return false
+	default:
+		return false
+	}
 }
 
 func validationLower(fl validator.FieldLevel) bool {
@@ -254,6 +298,7 @@ func init() {
 	Validate.RegisterValidation("func-lower", validationFuncLower)
 	Validate.RegisterValidation("func-upper", validationFuncUpper)
 	Validate.RegisterValidation("func-trim", validationFuncTrim)
+	Validate.RegisterValidation("modulo", validationModulo)
 	binding.Validator = new(ginValidator)
 
 	mgoModel.Validator = new(modelValidator)
