@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"log"
+	"logrus"
 	"net/http"
 	"os"
 	"os/signal"
