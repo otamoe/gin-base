@@ -3,6 +3,7 @@ package server
 import (
 	"log"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/globalsign/mgo"
@@ -21,6 +22,7 @@ type (
 		SocketTimeout time.Duration `json:"socket_timeout,omitempty"`
 
 		session *mgo.Session
+		once    sync.Once
 	}
 )
 
@@ -61,16 +63,17 @@ func (config *Mongo) init(server *Server, handler *Handler) {
 			mgo.SetLogger(log.New(logWriter, "", 0))
 		}
 	}
-
-	var err error
-	if config.session, err = mgo.DialWithTimeout(strings.Join(config.URLs, ","), config.DialTimeout); err != nil {
-		panic(err)
-	}
-	config.session.SetPoolLimit(config.PoolLimit)
-	config.session.SetPoolTimeout(config.PoolTimeout)
-	config.session.SetSocketTimeout(config.SocketTimeout)
 }
 
 func (config *Mongo) Get() *mgo.Session {
+	config.once.Do(func() {
+		var err error
+		if config.session, err = mgo.DialWithTimeout(strings.Join(config.URLs, ","), config.DialTimeout); err != nil {
+			panic(err)
+		}
+		config.session.SetPoolLimit(config.PoolLimit)
+		config.session.SetPoolTimeout(config.PoolTimeout)
+		config.session.SetSocketTimeout(config.SocketTimeout)
+	})
 	return config.session.Clone()
 }
