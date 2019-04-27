@@ -229,13 +229,13 @@ func (server *Server) Start() {
 	// kill -9 is syscall. SIGKILL but can"t be catch, so don't need add it
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
-	log.Println("Shutdown Server ...")
+	logrus.Println("Shutdown Server ...")
 	//
 	ctx, cancel := context.WithTimeout(context.Background(), server.ShutdownTimeout)
 	defer cancel()
 	if err := httpServer.Shutdown(ctx); err != nil {
-		log.Error("Server Shutdown:", err)
+		logrus.Error("Server Shutdown:", err)
 	}
 
-	log.Println("Server exiting")
+	logrus.Println("Server exiting")
 }
