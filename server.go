@@ -234,7 +234,7 @@ func (server *Server) Start() {
 	ctx, cancel := context.WithTimeout(context.Background(), server.ShutdownTimeout)
 	defer cancel()
 	if err := httpServer.Shutdown(ctx); err != nil {
-		log.Panic("Server Shutdown:", err)
+		log.Error("Server Shutdown:", err)
 	}
 
 	log.Println("Server exiting")
