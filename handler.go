@@ -81,10 +81,14 @@ func (handler *Handler) Init(server *Server) {
 	handler.gin.Use(errs.Middleware())
 
 	// Redis 中间件
-	handler.gin.Use(ginRedis.Middleware(handler.Redis.Get))
+	if handler.Redis != nil {
+		handler.gin.Use(ginRedis.Middleware(handler.Redis.Get))
+	}
 
 	// Mongo 中间件
-	handler.gin.Use(mongo.Middleware(handler.Mongo.Get))
+	if handler.Mongo != nil {
+		handler.gin.Use(mongo.Middleware(handler.Mongo.Get))
+	}
 
 	// body size
 	handler.gin.Use(size.Middleware(1024 * 512))

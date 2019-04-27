@@ -114,19 +114,19 @@ func (server *Server) Init() *Server {
 	if server.Compress == nil {
 		server.Compress = &Compress{}
 	}
+	server.Compress.init(server, nil)
+
 	if server.Logger == nil {
 		server.Logger = &Logger{}
 	}
-	if server.Redis == nil {
-		server.Redis = &Redis{}
-	}
-	if server.Mongo == nil {
-		server.Mongo = &Mongo{}
-	}
-	server.Compress.init(server, nil)
 	server.Logger.init(server, nil)
-	server.Redis.init(server, nil)
-	server.Mongo.init(server, nil)
+
+	if server.Redis != nil {
+		server.Redis.init(server, nil)
+	}
+	if server.Mongo != nil {
+		server.Mongo.init(server, nil)
+	}
 
 	return server
 }
