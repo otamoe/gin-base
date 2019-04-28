@@ -9,7 +9,7 @@ import (
 )
 
 type (
-	ScopeInterface interface {
+	Interface interface {
 		ValidateScope(resource *ginResource.Resource) (params map[string]interface{}, err error)
 	}
 )
@@ -27,9 +27,10 @@ func Middleware(required bool) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var err error
 		var params map[string]interface{}
-		resource := ctx.MustGet(ginResource.CONTEXT).(*ginResource.Resource)
 		if val, ok := ctx.Get(CONTEXT); ok {
-			params, err = val.(ScopeInterface).ValidateScope(resource)
+			resource := ctx.MustGet(ginResource.CONTEXT).(*ginResource.Resource)
+			resource.Pre()
+			params, err = val.(Interface).ValidateScope(resource)
 		} else {
 			err = ErrRequired
 		}

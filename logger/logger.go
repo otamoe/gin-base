@@ -22,14 +22,6 @@ type (
 		Prefix string
 		Logger *logrus.Logger
 	}
-	Resource struct {
-		Application bson.ObjectId `json:"application,omitempty" bson:"application,omitempty"`
-		Type        string        `json:"type,omitempty" bson:"type,omitempty"`
-		Action      string        `json:"action,omitempty" bson:"action,omitempty"`
-		Value       string        `json:"value,omitempty" bson:"value,omitempty"`
-		OwnerID     bson.ObjectId `json:"owner_id,omitempty" bson:"owner,omitempty"`
-		Params      map[string]interface{}
-	}
 	Logger struct {
 		mgoModel.DocumentBase `json:"-" bson:"-" binding:"-"`
 		ID                    bson.ObjectId          `json:"_id" bson:"_id"`
@@ -42,7 +34,7 @@ type (
 		Path                  string                 `json:"path,omitempty" bson:"path,omitempty"`
 		Query                 url.Values             `json:"query,omitempty" bson:"query,omitempty"`
 		Params                map[string]string      `json:"params,omitempty" bson:"params,omitempty"`
-		Resource              Resource               `json:"resource,omitempty" bson:"resource,omitempty"`
+		Resource              ginResource.Resource   `json:"resource,omitempty" bson:"resource,omitempty"`
 		Bind                  map[string]interface{} `json:"bind,omitempty" bson:"bind,omitempty"`
 		Latency               time.Duration          `json:"latency,omitempty" bson:"latency,omitempty"`
 		StatusCode            int                    `json:"status_code,omitempty" bson:"status_code,omitempty"`
@@ -122,29 +114,10 @@ func Middleware(c Config) gin.HandlerFunc {
 				logger.Latency = time.Now().Sub(*now)
 			}
 
-			if val, ok := ctx.Get(ginResource.CONTEXT); ok {
-				resource := val.(*ginResource.Resource)
-				if logger.Resource.Application == "" {
-					logger.Resource.Application = resource.Application
-				}
+			resource := ctx.MustGet(ginResource.CONTEXT).(*ginResource.Resource)
+			resource.Pre()
 
-				if logger.Resource.Type == "" {
-					logger.Resource.Type = resource.Type
-				}
-
-				if logger.Resource.Action == "" {
-					logger.Resource.Action = resource.Action
-				}
-				if logger.Resource.Value == "" {
-					logger.Resource.Value = resource.GetValue()
-				}
-				if logger.Resource.OwnerID == "" {
-					logger.Resource.OwnerID = resource.GetOwner()
-				}
-				if logger.Resource.Params == nil {
-					logger.Resource.Params = resource.Params
-				}
-			}
+			logger.Resource = *resource
 
 			if logger.Params == nil && len(ctx.Params) != 0 {
 				logger.Params = map[string]string{}
@@ -207,8 +180,8 @@ func Middleware(c Config) gin.HandlerFunc {
 				logger.Resource.Action,
 				logger.Resource.Value,
 			}, ":")
-			if logger.Resource.OwnerID != "" {
-				logger.Fields["resource_owner"] = logger.Resource.OwnerID.Hex()
+			if logger.Resource.Owner != "" {
+				logger.Fields["resource_owner"] = logger.Resource.Owner.Hex()
 			}
 
 			for name, val := range logger.Resource.Params {

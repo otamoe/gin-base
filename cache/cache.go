@@ -15,7 +15,7 @@ type (
 	}
 	Cache struct {
 		Control      []string
-		Context      *gin.Context
+		context      *gin.Context
 		Etag         interface{}
 		LastModified *time.Time
 	}
@@ -27,14 +27,14 @@ func Middleware(c Config) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		ctx.Set(CONTEXT, &Cache{
 			Control: c.Control,
-			Context: ctx,
+			context: ctx,
 		})
 		ctx.Next()
 	}
 }
 
 func (c *Cache) Header() {
-	ctx := c.Context
+	ctx := c.context
 	ctx.Header("cache-control", strings.Join(c.Control, ","))
 	if c.LastModified != nil {
 		ctx.Header("last-modified", c.LastModified.Format(http.TimeFormat))
@@ -48,7 +48,7 @@ func (c *Cache) Header() {
 
 func (c *Cache) Match() bool {
 	c.Header()
-	ctx := c.Context
+	ctx := c.context
 	ifUnmodifiedSince := ctx.GetHeader("if-unmodified-since")
 	ifModifiedSince := ctx.GetHeader("if-modified-since")
 

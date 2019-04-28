@@ -12,26 +12,29 @@ import (
 
 type (
 	Config struct {
-		Application bson.ObjectId
-		Type        string
-		Action      string
-		Value       string
-		Owner       bson.ObjectId
-		ValueKeys   []string
-		OwnerKeys   []string
-		Params      map[string]interface{}
-	}
-	Resource struct {
-		context   *gin.Context
 		ValueKeys []string
 		OwnerKeys []string
 
+		Parent      *Config
 		Application bson.ObjectId
 		Type        string
 		Action      string
 		Value       string
 		Owner       bson.ObjectId
 		Params      map[string]interface{}
+	}
+
+	ResourcePre func(resource *Resource)
+
+	Resource struct {
+		pres        []ResourcePre
+		Parent      *Resource              `json:"parent,omitempty" bson:"parent,omitempty"`
+		Application bson.ObjectId          `json:"application,omitempty" bson:"application,omitempty"`
+		Type        string                 `json:"type,omitempty" bson:"type,omitempty"`
+		Action      string                 `json:"action,omitempty" bson:"action,omitempty"`
+		Value       string                 `json:"value,omitempty" bson:"value,omitempty"`
+		Owner       bson.ObjectId          `json:"owner,omitempty" bson:"owner,omitempty"`
+		Params      map[string]interface{} `json:"params,omitempty" bson:"params,omitempty"`
 	}
 )
 
@@ -58,21 +61,23 @@ func Middleware(config Config) gin.HandlerFunc {
 		if val, ok := ctx.Get(CONTEXT); ok {
 			resource = val.(*Resource)
 		} else {
-			resource = &Resource{
-				context: ctx,
-				Params:  map[string]interface{}{},
-			}
+			resource = &Resource{}
 			ctx.Set(CONTEXT, resource)
 		}
-		resource.Config(config)
 		if val, ok := handlersMap.Load(reflect.ValueOf(ctx.Handler())); ok && val != nil {
-			resource.Config(val.(Config))
+			val.(Config).setResource(ctx, resource)
 		}
+		config.setResource(ctx, resource)
 		ctx.Next()
 	}
 }
 
-func (resource *Resource) Config(config Config) {
+func (config Config) setResource(ctx *gin.Context, resource *Resource) {
+	if config.Parent != nil {
+		parent := &Resource{}
+		config.Parent.setResource(ctx, parent)
+		resource.Parent = parent
+	}
 	if config.Application != "" {
 		resource.Application = config.Application
 	}
@@ -89,52 +94,134 @@ func (resource *Resource) Config(config Config) {
 	if config.Owner != "" {
 		resource.Owner = config.Owner
 	}
-
-	if config.ValueKeys != nil {
-		resource.ValueKeys = config.ValueKeys
-	}
-	if config.OwnerKeys != nil {
-		resource.OwnerKeys = config.OwnerKeys
-	}
-
 	for key, val := range config.Params {
-		resource.Params[key] = val
-	}
-}
-func (resource *Resource) GetValue() string {
-	if resource.Value == "" && len(resource.ValueKeys) != 0 {
-		if val, ok := utils.GetContextValue(resource.context, resource.ValueKeys); ok && val != nil {
-			switch val := val.(type) {
-			case bson.ObjectId:
-				resource.Value = val.Hex()
-			case fmt.Stringer:
-				resource.Value = val.String()
-			default:
-				resource.Value = fmt.Sprintf("%+v", val)
-			}
-		}
+		resource.SetParam(key, val)
 	}
 
+	if len(config.ValueKeys) != 0 {
+		valueKeys := config.ValueKeys
+		resource.AppendPre(func(resource *Resource) {
+			if resource.Value == "" {
+				if val, ok := utils.GetContextValue(ctx, valueKeys); ok && val != nil {
+					switch val := val.(type) {
+					case bson.ObjectId:
+						resource.Value = val.Hex()
+					case fmt.Stringer:
+						resource.Value = val.String()
+					default:
+						resource.Value = fmt.Sprintf("%+v", val)
+					}
+				}
+			}
+		})
+	}
+	if len(config.OwnerKeys) != 0 {
+		ownerKeys := config.OwnerKeys
+		resource.AppendPre(func(resource *Resource) {
+			if resource.Value == "" {
+				if val, ok := utils.GetContextValue(ctx, ownerKeys); ok && val != nil {
+					switch val := val.(type) {
+					case bson.ObjectId:
+						resource.Owner = val
+					case fmt.Stringer:
+						if bson.IsObjectIdHex(val.String()) {
+							resource.Owner = bson.ObjectIdHex(val.String())
+						}
+					default:
+						val2 := fmt.Sprintf("%+v", val)
+						if bson.IsObjectIdHex(val2) {
+							resource.Owner = bson.ObjectIdHex(val2)
+						}
+					}
+				}
+			}
+		})
+	}
+
+}
+
+func (resource *Resource) GetParent() *Resource {
+	return resource.Parent
+}
+
+func (resource *Resource) GetApplication() bson.ObjectId {
+	return resource.Application
+}
+func (resource *Resource) GetType() string {
+	return resource.Type
+}
+
+func (resource *Resource) GetAction() string {
+	return resource.Action
+}
+
+func (resource *Resource) GetValue() string {
 	return resource.Value
 }
 
 func (resource *Resource) GetOwner() bson.ObjectId {
-	if resource.Owner == "" && len(resource.OwnerKeys) != 0 {
-		if val, ok := utils.GetContextValue(resource.context, resource.OwnerKeys); ok && val != nil {
-			switch val := val.(type) {
-			case bson.ObjectId:
-				resource.Owner = val
-			case fmt.Stringer:
-				if bson.IsObjectIdHex(val.String()) {
-					resource.Owner = bson.ObjectIdHex(val.String())
-				}
-			default:
-				val2 := fmt.Sprintf("%+v", val)
-				if bson.IsObjectIdHex(val2) {
-					resource.Owner = bson.ObjectIdHex(val2)
-				}
-			}
-		}
-	}
 	return resource.Owner
+}
+
+func (resource *Resource) GetParams() map[string]interface{} {
+	return resource.Params
+}
+
+func (resource *Resource) GetParam(key string) (val interface{}, ok bool) {
+	val, ok = resource.Params[key]
+	return nil, false
+}
+
+func (resource *Resource) SetParent(parent *Resource) {
+	resource.Parent = nil
+	return
+}
+func (resource *Resource) SetApplication(val bson.ObjectId) {
+	resource.Application = val
+	return
+}
+func (resource *Resource) SetType(val string) {
+	resource.Type = val
+	return
+}
+func (resource *Resource) SetAction(val string) {
+	resource.Action = val
+	return
+}
+func (resource *Resource) SetValue(val string) {
+	resource.Value = val
+	return
+}
+func (resource *Resource) SetOwner(val bson.ObjectId) {
+	resource.Owner = val
+	return
+}
+func (resource *Resource) SetParams(params map[string]interface{}) {
+	resource.Params = params
+	return
+}
+
+func (resource *Resource) SetParam(key string, val interface{}) {
+	if resource.Params == nil {
+		resource.Params = map[string]interface{}{}
+	}
+	resource.Params[key] = val
+	return
+}
+
+func (resource *Resource) AppendPre(pre ResourcePre) {
+	resource.pres = append(resource.pres, pre)
+	return
+}
+
+func (resource *Resource) Pre() {
+	if resource.pres == nil {
+		return
+	}
+	pres := resource.pres
+	resource.pres = nil
+	for _, pre := range pres {
+		pre(resource)
+	}
+	return
 }
