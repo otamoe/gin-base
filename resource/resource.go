@@ -94,8 +94,13 @@ func (config Config) setResource(ctx *gin.Context, resource *Resource) {
 	if config.Owner != "" {
 		resource.Owner = config.Owner
 	}
-	for key, val := range config.Params {
-		resource.SetParam(key, val)
+	if len(config.Params) != 0 {
+		if resource.Params == nil {
+			resource.Params = map[string]interface{}{}
+		}
+		for key, val := range config.Params {
+			resource.Params[key] = val
+		}
 	}
 
 	if len(config.ValueKeys) != 0 {
@@ -138,75 +143,6 @@ func (config Config) setResource(ctx *gin.Context, resource *Resource) {
 		})
 	}
 
-}
-
-func (resource *Resource) GetParent() *Resource {
-	return resource.Parent
-}
-
-func (resource *Resource) GetApplication() bson.ObjectId {
-	return resource.Application
-}
-func (resource *Resource) GetType() string {
-	return resource.Type
-}
-
-func (resource *Resource) GetAction() string {
-	return resource.Action
-}
-
-func (resource *Resource) GetValue() string {
-	return resource.Value
-}
-
-func (resource *Resource) GetOwner() bson.ObjectId {
-	return resource.Owner
-}
-
-func (resource *Resource) GetParams() map[string]interface{} {
-	return resource.Params
-}
-
-func (resource *Resource) GetParam(key string) (val interface{}, ok bool) {
-	val, ok = resource.Params[key]
-	return nil, false
-}
-
-func (resource *Resource) SetParent(parent *Resource) {
-	resource.Parent = nil
-	return
-}
-func (resource *Resource) SetApplication(val bson.ObjectId) {
-	resource.Application = val
-	return
-}
-func (resource *Resource) SetType(val string) {
-	resource.Type = val
-	return
-}
-func (resource *Resource) SetAction(val string) {
-	resource.Action = val
-	return
-}
-func (resource *Resource) SetValue(val string) {
-	resource.Value = val
-	return
-}
-func (resource *Resource) SetOwner(val bson.ObjectId) {
-	resource.Owner = val
-	return
-}
-func (resource *Resource) SetParams(params map[string]interface{}) {
-	resource.Params = params
-	return
-}
-
-func (resource *Resource) SetParam(key string, val interface{}) {
-	if resource.Params == nil {
-		resource.Params = map[string]interface{}{}
-	}
-	resource.Params[key] = val
-	return
 }
 
 func (resource *Resource) AppendPre(pre ResourcePre) {
