@@ -61,7 +61,9 @@ func Middleware(config Config) gin.HandlerFunc {
 		if val, ok := ctx.Get(CONTEXT); ok {
 			resource = val.(*Resource)
 		} else {
-			resource = &Resource{}
+			resource = &Resource{
+				Params: map[string]interface{}{},
+			}
 			ctx.Set(CONTEXT, resource)
 		}
 		if val, ok := handlersMap.Load(reflect.ValueOf(ctx.Handler())); ok && val != nil {
