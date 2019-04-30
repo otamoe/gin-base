@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	_ "github.com/otamoe/gin-server/validator"
 	"github.com/sirupsen/logrus"
 )
 
