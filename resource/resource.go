@@ -125,7 +125,7 @@ func (config Config) setResource(ctx *gin.Context, resource *Resource) {
 	if len(config.OwnerKeys) != 0 {
 		ownerKeys := config.OwnerKeys
 		resource.AppendPre(func(resource *Resource) {
-			if resource.Value == "" {
+			if resource.Owner == "" {
 				if val, ok := utils.GetContextValue(ctx, ownerKeys); ok && val != nil {
 					switch val := val.(type) {
 					case bson.ObjectId:
