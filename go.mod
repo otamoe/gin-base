@@ -16,7 +16,7 @@ require (
 	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/onsi/ginkgo v1.8.0 // indirect
 	github.com/onsi/gomega v1.5.0 // indirect
-	github.com/otamoe/mgo-model v0.0.0-20190412052249-cb4bbacc4d83
+	github.com/otamoe/mgo-model v0.0.0-20190515075216-58d4c6d47bdb
 	github.com/sirupsen/logrus v1.4.1
 	github.com/ugorji/go v1.1.4 // indirect
 	golang.org/x/net v0.0.0-20190415100556-4a65cf94b679 // indirect
