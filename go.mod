@@ -10,7 +10,7 @@ require (
 	github.com/leodido/go-urn v1.1.0 // indirect
 	github.com/onsi/ginkgo v1.8.0 // indirect
 	github.com/onsi/gomega v1.5.0 // indirect
-	github.com/otamoe/mgo-model v0.1.0
+	github.com/otamoe/mgo-model v0.1.1
 	github.com/sirupsen/logrus v1.4.1
 	gopkg.in/go-playground/validator.v9 v9.28.0
 )
