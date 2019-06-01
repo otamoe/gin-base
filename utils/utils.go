@@ -5,6 +5,7 @@ import (
 	"math/big"
 	"net/http"
 	"reflect"
+	"regexp"
 	"runtime"
 	"strings"
 
@@ -134,4 +135,43 @@ func IsMobile(req *http.Request) bool {
 		return true
 	}
 	return false
+}
+
+var searchFilterRegex = regexp.MustCompile("[[:cntrl:][:punct:][:space:]\\pC\\pP\\pZ\\pM]+")
+var searchSplitRegex = regexp.MustCompile("([[:digit:]]+|[[:alpha:]]+|\\pN+|\\pL)")
+
+type (
+	SearchQueryValue struct {
+		Operator string
+		Value    string
+	}
+)
+
+func SearchQuery(val string) (searchQueryValues []SearchQueryValue) {
+	val = searchFilterRegex.ReplaceAllString(val, " ")
+	val = searchSplitRegex.ReplaceAllString(val, " $1 ")
+	val = strings.ToLower(val)
+	for _, value := range strings.Split(val, " ") {
+		value = strings.TrimSpace(value)
+		if value != "" {
+			searchQueryValues = append(searchQueryValues, SearchQueryValue{
+				Operator: "+",
+				Value:    value,
+			})
+		}
+	}
+	return
+}
+
+func SearchSplit(val string) (values []string) {
+	val = searchFilterRegex.ReplaceAllString(val, " ")
+	val = searchSplitRegex.ReplaceAllString(val, " $1 ")
+	val = strings.ToLower(val)
+	for _, value := range strings.Split(val, " ") {
+		value = strings.TrimSpace(value)
+		if value != "" {
+			values = append(values, value)
+		}
+	}
+	return
 }
